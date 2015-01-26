@@ -1,40 +1,82 @@
 package aqua
 
 import (
+	_ "fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
+var separator string = ","
+
 type Jar struct {
-	Posted map[string]string
-	QryStr map[string]string
+	Request   *http.Request
+	PostVars  map[string]string
+	QueryVars map[string]string
+	Body      string
 }
 
 func NewJar(r *http.Request) Jar {
-	out := Jar{
-		Posted: make(map[string]string),
-		QryStr: make(map[string]string),
+	return Jar{
+		Request: r,
+	}
+}
+
+func (j *Jar) LoadVars() {
+
+	if j.PostVars != nil {
+		panic("Jar.Load can be called only once")
+	} else {
+		j.PostVars = make(map[string]string)
+		j.QueryVars = make(map[string]string)
 	}
 
-	r.ParseForm()
-	for k, _ := range r.PostForm {
-		out.Posted[k] = strings.Join(r.PostForm[k], ",")
+	if j.Request.Method == "POST" || j.Request.Method == "PUT" {
+		ctype := j.Request.Header.Get("Content-Type")
+		switch {
+		case ctype == "application/x-www-form-urlencoded":
+			j.Request.ParseForm()
+			j.loadPostVars(j.Request)
+			j.loadQueryVars(j.Request, true)
+		case strings.HasPrefix(ctype, "multipart/form-data;"):
+			// ParseMultiPart form should ideally populate
+			// r.PostForm, but instead it fills r.Form
+			// https://github.com/golang/go/issues/9305
+			j.Request.ParseMultipartForm(1024 * 1024)
+			j.loadPostVars(j.Request)
+			j.loadQueryVars(j.Request, true)
+		default:
+			j.Body = getBody(j.Request)
+		}
+	} else if j.Request.Method == "GET" {
+		j.Request.ParseForm()
+		j.loadQueryVars(j.Request, false)
 	}
+}
+
+func getBody(r *http.Request) string {
+	b, err := ioutil.ReadAll(r.Body)
+	panicIf(err)
+	defer r.Body.Close()
+	return string(b)
+}
+
+func (j *Jar) loadPostVars(r *http.Request) {
+	for k, _ := range r.PostForm {
+		j.PostVars[k] = strings.Join(r.PostForm[k], separator)
+	}
+}
+
+func (j *Jar) loadQueryVars(r *http.Request, skipPostVars bool) {
 	for k, _ := range r.Form {
-		// For a cleaner separation, remove
-		// post vars from QryStr
-		if _, found := out.Posted[k]; !found {
-			out.QryStr[k] = strings.Join(r.Form[k], ",")
+		if skipPostVars {
+			// only add to query-vars if it is NOT a post var
+			if _, found := j.PostVars[k]; !found {
+				j.QueryVars[k] = strings.Join(r.Form[k], separator)
+			}
+		} else {
+			j.QueryVars[k] = strings.Join(r.Form[k], separator)
 		}
 	}
 
-	// TODO: handle multipart form (files)
-
-	// USED FOR DEBUGGING
-	// fmt.Println("{ --- JAR --- ")
-	// fmt.Printf("post:%s\n", out.Posted)
-	// fmt.Printf("qstr:%s\n", out.QryStr)
-	// fmt.Println("}")
-
-	return out
 }

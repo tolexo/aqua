@@ -47,7 +47,7 @@ func writeItem(w http.ResponseWriter, oType string, oVal reflect.Value, pretty s
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(j)))
 		w.Write(j)
-	case "st:aqua.Sac":
+	case "st:github.com/thejackrabbit/aqua.Sac":
 		s := oVal.Interface().(Sac)
 		writeItem(w, getSymbolFromType(reflect.TypeOf(s.Data)), reflect.ValueOf(s.Data), pretty)
 	default:

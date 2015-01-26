@@ -12,7 +12,8 @@ type jarService struct {
 }
 
 func (u *jarService) Echo(j Jar) string {
-	return j.QryStr["abc"]
+	j.LoadVars()
+	return j.QueryVars["abc"]
 }
 
 func TestGetWorksWithJar(t *testing.T) {

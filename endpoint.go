@@ -67,11 +67,11 @@ func (me *endPoint) signatureMatchesDefaultHttpHandler() bool {
 func (me *endPoint) needsVariableJar() bool {
 	// needs jar input as the last parameter
 	for i := 0; i < len(me.caller.inpParams)-1; i++ {
-		if me.caller.inpParams[i] == "st:aqua.Jar" {
+		if me.caller.inpParams[i] == "st:github.com/thejackrabbit/aqua.Jar" {
 			panic("Jar parameter should be the last one: " + me.caller.name)
 		}
 	}
-	return me.caller.inpCount > 0 && me.caller.inpParams[me.caller.inpCount-1] == "st:aqua.Jar"
+	return me.caller.inpCount > 0 && me.caller.inpParams[me.caller.inpCount-1] == "st:github.com/thejackrabbit/aqua.Jar"
 }
 
 func (me *endPoint) validateMuxVarsMatchFuncInputs() {
@@ -93,7 +93,7 @@ func (me *endPoint) validateFuncInputsAreOfRightType() {
 	if !me.isStdHttpHandler {
 		for _, s := range me.caller.inpParams {
 			switch s {
-			case "st:aqua.Jar":
+			case "st:github.com/thejackrabbit/aqua.Jar":
 			case "int":
 			case "string":
 			default:
@@ -108,13 +108,15 @@ func (me *endPoint) validateFuncOutputsAreCorrect() {
 	var accepts = make(map[string]bool)
 	accepts["string"] = true
 	accepts["map"] = true
-	accepts["st:aqua.Sac"] = true
-	accepts["*st:aqua.Sac"] = true
+	accepts["st:github.com/thejackrabbit/aqua.Sac"] = true
+	accepts["*st:github.com/thejackrabbit/aqua.Sac"] = true
 
 	if !me.isStdHttpHandler {
 		switch me.caller.outCount {
 		case 1:
 			if _, found := accepts[me.caller.outParams[0]]; !found {
+				fmt.Println(me.caller.outParams[0])
+				fmt.Println(accepts)
 				panic("Incorrect return type found in: " + me.caller.name)
 			}
 		case 2:
