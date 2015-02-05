@@ -3,7 +3,7 @@ Golang Restful APIs in a cup, and ready to serve!
 
 
 ##Inspiration
-- Apache WebServer
+- Apache and IIS WebServers
 - Go-Rest API framework
 
 ##Project Goals
@@ -57,7 +57,7 @@ server.AddService(&HelloService{})
 server.Run()
 ```
 
-Now open your browser window, and hit ***http://localhost:8080/hello/world***
+Now open your browser window, and hit *http://localhost:8080/hello/world*
 
 ---
 
@@ -78,7 +78,7 @@ Simply add both the methods, but specify versions in field tags.
 ```
 type HelloService struct {
 	aqua.RestService
-	world aqua.GetApi `version:1.0`
+	world aqua.GetApi `version:"1.0"`
 	worldNew aqua.GetApi `version:"1.1"`
 }
 func (me *HelloService) World() string {
@@ -90,18 +90,52 @@ func (me *HelloService) WorldNew(w http.ResponseWriter, r *http.Request) {
 ```
 Now you can hit:
 
-http://localhost:8080/v1.0/hello/world and
+*http://localhost:8080/v1.0/hello/world* and
 
-http://localhost:8080/v1.1/hello/world to see the difference.
+*http://localhost:8080/v1.1/hello/world* to see the difference.
 
 ---
 
-### Q: How do I specify URLs for my apis? Does Aqua use any mux?
+### Q: How do I specify or customize URLs for my apis? 
 
-Aqua uses Gorilla mux for URL routing. There are quite a few out-of-box setting available in field tags, that help you customize URLs. These are:
+There are 3 out-of-box setting available in field tags, that help you customize URLs. 
 
 - prefix
 - root
 - url
 
-Lets see how each of these work. 
+Lets see how each of these work. To change the url after the main directory, you simply use the url tag.
+
+```
+type HelloService struct {
+	aqua.RestService
+	world aqua.GetApi `url:"aqua-world"` 
+	worldNew aqua.GetApi `url:"water-world"`
+}
+```
+After this change the *hello/world* urls won't work any more. Instead you'd need to use the following ones:
+
+*http://localhost:8080/hello/aqua-world* and
+
+*http://localhost:8080/hello/water-world*
+
+To change the root directory (*hello*), you can use the *root* tag at each service level, or more simply at the service controller level as demonstrated below:
+
+```
+type HelloService struct {
+	aqua.RestService  `root:"this-is"`
+	world aqua.GetApi `url:"aqua-world"` 
+	worldNew aqua.GetApi `url:"water-world"`
+}
+```
+
+With this change, your api endpoints are now working at:
+
+*http://localhost:8080/this-is/aqua-world* and
+
+*http://localhost:8080/this-is/water-world*
+
+### Q: Does Aqua use any mux?
+
+Yes, Gorilla mux. And so to define url parameters, we'll need to follow Gorilla mux conventions. We'll get to those in a moment
+
