@@ -32,7 +32,7 @@ Golang Restful APIs in a cup, and ready to serve!
 
 
 ### Q: How do I write a 'hello world' api?
-First define a service controller in your project that supports a GET response (aqua.GetApi)
+First define a service controller in your project that supports a GET response (aqua.GetApi as a field type). Note that the controller defined as a struct must anonymously include aqua.RestSerivice. 
 
 ```
 type HelloService struct {
