@@ -1,7 +1,7 @@
 package aqua
 
 import (
-	_ "fmt"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -9,8 +9,14 @@ import (
 
 var separator string = ","
 
+// Jar allows access to 1/ the reqeust, and 2/ variables (post, get and body)
+// However, to load these variable values, LoadVars() method needs to be invoked
+// in prior.
 type Jar struct {
-	Request   *http.Request
+	// request handle
+	Request *http.Request
+
+	// variables
 	PostVars  map[string]string
 	QueryVars map[string]string
 	Body      string
@@ -23,6 +29,8 @@ func NewJar(r *http.Request) Jar {
 }
 
 func (j *Jar) LoadVars() {
+
+	fmt.Println("inside load vars")
 
 	if j.PostVars != nil {
 		panic("Jar.Load can be called only once")

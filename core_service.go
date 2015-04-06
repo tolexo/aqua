@@ -11,7 +11,7 @@ type CoreService struct {
 	RestService `root:"/aqua/"`
 	ping        GetApi `url:"/ping"`
 	status      GetApi `url:"/status" pretty:"true"`
-	date        GetApi `url:"/date"`
+	date        GetApi `url:"/time"`
 }
 
 func (me *CoreService) Ping() string {

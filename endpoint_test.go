@@ -90,7 +90,7 @@ func TestVersionCapability(t *testing.T) {
 		Convey("Then the servers should honour urls with accept headers of style1", func() {
 			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
 			head := make(map[string]string)
-			head["Accept"] = "application/" + defaults.Vnd + "-v1+json"
+			head["Accept"] = "application/" + defaults.Vendor + "-v1+json"
 			code, _, content := getUrl(url, head)
 			So(code, ShouldEqual, 200)
 			So(content, ShouldEqual, "one")
@@ -98,7 +98,7 @@ func TestVersionCapability(t *testing.T) {
 		Convey("Then the servers should honour urls with accept headers of style2", func() {
 			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
 			head := make(map[string]string)
-			head["Accept"] = "application/" + defaults.Vnd + "+json;version=1"
+			head["Accept"] = "application/" + defaults.Vendor + "+json;version=1"
 			code, _, content := getUrl(url, head)
 			So(code, ShouldEqual, 200)
 			So(content, ShouldEqual, "one")
@@ -106,7 +106,7 @@ func TestVersionCapability(t *testing.T) {
 		Convey("Then an endpoint in the same service with the same url but different version should be independant", func() {
 			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
 			head := make(map[string]string)
-			head["Accept"] = "application/" + defaults.Vnd + "-v2+json"
+			head["Accept"] = "application/" + defaults.Vendor + "-v2+json"
 			code, _, content := getUrl(url, head)
 			So(code, ShouldEqual, 200)
 			So(content, ShouldEqual, "two")
@@ -114,7 +114,7 @@ func TestVersionCapability(t *testing.T) {
 		Convey("Then an endpoint in a different service with the same url but different version should be independant", func() {
 			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
 			head := make(map[string]string)
-			head["Accept"] = "application/" + defaults.Vnd + "-v3+json"
+			head["Accept"] = "application/" + defaults.Vendor + "-v3+json"
 			code, _, content := getUrl(url, head)
 			So(code, ShouldEqual, 200)
 			So(content, ShouldEqual, "three")

@@ -8,7 +8,8 @@ import (
 
 type jarService struct {
 	RestService
-	echo GetApi
+	echo  GetApi
+	echo2 GetApi
 }
 
 func (u *jarService) Echo(j Jar) string {
@@ -16,7 +17,11 @@ func (u *jarService) Echo(j Jar) string {
 	return j.QueryVars["abc"]
 }
 
-func TestGetWorksWithJar(t *testing.T) {
+func (u *jarService) Echo2(j Jar) string {
+	return j.QueryVars["def"]
+}
+
+func TestJarForHttpGETMethod(t *testing.T) {
 
 	s := NewRestServer()
 	s.AddService(&jarService{})
@@ -29,5 +34,11 @@ func TestGetWorksWithJar(t *testing.T) {
 			_, _, content := getUrl(url, nil)
 			So(content, ShouldEqual, "whatsUp")
 		})
+		Convey("Echo2 service should fail since LoadVars is not invoked", func() {
+			url := fmt.Sprintf("http://localhost:%d/jar/echo2?def=hello", port)
+			_, _, content := getUrl(url, nil)
+			So(content, ShouldEqual, "")
+		})
+
 	})
 }

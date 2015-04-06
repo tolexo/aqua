@@ -10,7 +10,7 @@ type Fixture struct {
 	Url     string
 	Version string
 	Pretty  string
-	Vnd     string
+	Vendor  string
 	Modules string
 }
 
@@ -19,29 +19,54 @@ func NewFixtureFromTag(i interface{}, fieldName string) Fixture {
 	field, _ := reflect.TypeOf(i).Elem().FieldByName(fieldName)
 	tag := field.Tag
 
-	if tag.Get("prefix") != "" {
-		out.Prefix = tag.Get("prefix")
+	var tmp string
+
+	tmp = getTagValue(tag, "prefix", "pre")
+	if tmp != "" {
+		out.Prefix = tmp
 	}
-	if tag.Get("root") != "" {
-		out.Root = tag.Get("root")
+
+	tmp = getTagValue(tag, "root")
+	if tmp != "" {
+		out.Root = tmp
 	}
-	if tag.Get("url") != "" {
-		out.Url = tag.Get("url")
+
+	tmp = getTagValue(tag, "url")
+	if tmp != "" {
+		out.Url = tmp
 	}
-	if tag.Get("version") != "" {
-		out.Version = tag.Get("version")
+
+	tmp = getTagValue(tag, "version", "ver")
+	if tmp != "" {
+		out.Version = tmp
 	}
-	if tag.Get("pretty") != "" {
-		out.Pretty = tag.Get("pretty")
+
+	tmp = getTagValue(tag, "pretty", "pty")
+	if tmp != "" {
+		out.Pretty = tmp
 	}
-	if tag.Get("vnd") != "" {
-		out.Vnd = tag.Get("vnd")
+
+	tmp = getTagValue(tag, "vendor", "vnd")
+	if tmp != "" {
+		out.Vendor = tmp
 	}
-	if tag.Get("modules") != "" {
-		out.Modules = tag.Get("modules")
+
+	tmp = getTagValue(tag, "modules", "mods")
+	if tmp != "" {
+		out.Modules = tmp
 	}
 
 	return out
+}
+
+// Get the first non-empty matching tag value for given variations of a key
+func getTagValue(tag reflect.StructTag, keys ...string) string {
+	for _, key := range keys {
+		if tag.Get(key) != "" {
+			return tag.Get(key)
+		}
+	}
+	return ""
 }
 
 func resolveInOrder(e ...Fixture) Fixture {
@@ -64,8 +89,8 @@ func resolveInOrder(e ...Fixture) Fixture {
 		if out.Pretty == empty && ep.Pretty != empty {
 			out.Pretty = ep.Pretty
 		}
-		if out.Vnd == empty && ep.Vnd != empty {
-			out.Vnd = ep.Vnd
+		if out.Vendor == empty && ep.Vendor != empty {
+			out.Vendor = ep.Vendor
 		}
 		if out.Modules == empty && ep.Modules != empty {
 			out.Modules = ep.Modules

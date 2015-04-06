@@ -43,7 +43,7 @@ func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod strin
 
 	if mods != nil && f.Modules != "" {
 		names := strings.Split(f.Modules, ",")
-		out.modules = make([]func(http.Handler) http.Handler, len(names))
+		out.modules = make([]func(http.Handler) http.Handler, 0)
 		for _, name := range names {
 			name = strings.TrimSpace(name)
 			fn, found := mods[name]
@@ -147,6 +147,7 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 	m := interpose.New()
 	for i, _ := range me.modules {
 		m.Use(me.modules[i])
+		fmt.Println("using module:", me.modules[i], reflect.TypeOf(me.modules[i]))
 	}
 	m.UseHandler(http.HandlerFunc(fn))
 
@@ -160,11 +161,11 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 		mux.Handle(urlWithVersion, m).Methods(me.httpMethod)
 
 		// content type (style1)
-		header1 := fmt.Sprintf("application/%s-v%s+json", me.info.Vnd, me.info.Version)
+		header1 := fmt.Sprintf("application/%s-v%s+json", me.info.Vendor, me.info.Version)
 		mux.Handle(urlWithoutVersion, m).Methods(me.httpMethod).Headers("Accept", header1)
 
 		// content type (style2)
-		header2 := fmt.Sprintf("application/%s+json;version=%s", me.info.Vnd, me.info.Version)
+		header2 := fmt.Sprintf("application/%s+json;version=%s", me.info.Vendor, me.info.Version)
 		mux.Handle(urlWithoutVersion, m).Methods(me.httpMethod).Headers("Accept", header2)
 	}
 }

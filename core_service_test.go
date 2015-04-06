@@ -32,8 +32,8 @@ func TestCoreFunctions(t *testing.T) {
 			So(content, ShouldContainSubstring, "server-time")
 		})
 
-		Convey("Then /aqua/date should response with a date", func() {
-			url := fmt.Sprintf("http://localhost:%d/aqua/date", port)
+		Convey("Then /aqua/time should respond with a timestamp", func() {
+			url := fmt.Sprintf("http://localhost:%d/aqua/time", port)
 			code, ctype, content := getUrl(url, nil)
 			So(code, ShouldEqual, 200)
 			So(ctype, ShouldStartWith, "text/plain")

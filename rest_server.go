@@ -14,7 +14,7 @@ var defaults Fixture = Fixture{
 	Url:     "",
 	Version: "*",
 	Pretty:  "false",
-	Vnd:     "vnd.api",
+	Vendor:  "vnd.api",
 	Modules: "",
 }
 

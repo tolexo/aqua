@@ -10,17 +10,17 @@ Golang Restful APIs in a cup, and ready to serve!
 
 -  Simplicity & Modularity
    -  Aqua uses service controllers to define related endpoints in a module
-- Low learning curve (developer usability)
+- Low learning curve
 - High Configurability
    - configurations can be defined at 4 levels 
      - at server level, programmatically (inherited by everything)
      - at service level, declaratively (inherited by all api's in that service)
-     - service level, programmatically)
+     - service level (programmatically)
      - api or end point level, declaratively (applies to that particular service only)
 - Easy versioning
 	- declaratively specify the version of an api
 	- support multiple versions by 
-	  - defining it at the service controller level (inherited by all internal endpoints)
+	  - defining versions at service controller level (inherited by all internal endpoints)
 	  - configuring different end points within a service controller to have different versions
 - Preference for json (over xml)
 - Developers (can & should) focus on high/object level data structures
@@ -32,7 +32,7 @@ Golang Restful APIs in a cup, and ready to serve!
 
 
 ### Q: How do I write a 'hello world' api?
-First define a service controller in your project that supports a GET response (aqua.GetApi as a field type). Note that the controller defined as a struct must anonymously include aqua.RestSerivice. 
+First define a service controller in your project that supports a GET response (aqua.GetApi as a field type). Note that the controller defined as a struct must anonymously include aqua.RestService. 
 
 ```
 type HelloService struct {
@@ -79,7 +79,7 @@ Simply add both the methods, but specify versions in field tags.
 type HelloService struct {
 	aqua.RestService
 	world aqua.GetApi `version:"1.0"`
-	worldNew aqua.GetApi `version:"1.1"`
+	worldNew aqua.GetApi `version:"1.1" url:"world"`
 }
 func (me *HelloService) World() string {
 	return "Hello World"
@@ -94,9 +94,10 @@ Now you can hit:
 
 *http://localhost:8080/v1.1/hello/world* to see the difference.
 
+
 ---
 
-### Q: How do I specify or customize URLs for my apis? 
+### Q: What options can I use to customize URLs for my apis? 
 
 There are 3 out-of-box setting available in field tags, that help you customize URLs. 
 
@@ -135,7 +136,31 @@ With this change, your api endpoints are now working at:
 
 *http://localhost:8080/this-is/water-world*
 
+You can also use the 'prefix' field. This part comes in before the version in the final constructed endpoint url
+
+```
+type HelloService struct {
+	aqua.RestService  `root:"this-is" prefix:"sunshine"`
+	world aqua.GetApi `url:"aqua-world" version:"1.2"` 
+	worldNew aqua.GetApi `url:"water-world" version:"1.5"`
+}
+```
+
+So with this prefix, our end points would become:
+
+*http://localhost:8080/sunshine/v1.2/this-is/aqua-world*
+
+*http://localhost:8080/sunshine/v1.5/this-is/water-world*
+
+
 ### Q: Does Aqua use any mux?
 
 Yes, Gorilla mux. And so to define url parameters, we'll need to follow Gorilla mux conventions. We'll get to those in a moment
 
+### Q: How can I check if the server is up and running?
+
+By default an "aqua" route is setup:
+
+ - */aqua/ping* returns "pong" if the server is running
+ - */aqua/status* returns version, go runtime memory information
+ - */aqua/time* returns current server time
