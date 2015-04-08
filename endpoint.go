@@ -147,7 +147,7 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 	m := interpose.New()
 	for i, _ := range me.modules {
 		m.Use(me.modules[i])
-		fmt.Println("using module:", me.modules[i], reflect.TypeOf(me.modules[i]))
+		//fmt.Println("using module:", me.modules[i], reflect.TypeOf(me.modules[i]))
 	}
 	m.UseHandler(http.HandlerFunc(fn))
 

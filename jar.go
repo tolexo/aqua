@@ -1,7 +1,7 @@
 package aqua
 
 import (
-	"fmt"
+	_ "fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -29,8 +29,6 @@ func NewJar(r *http.Request) Jar {
 }
 
 func (j *Jar) LoadVars() {
-
-	fmt.Println("inside load vars")
 
 	if j.PostVars != nil {
 		panic("Jar.Load can be called only once")
