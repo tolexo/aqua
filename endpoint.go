@@ -114,16 +114,17 @@ func (me *endPoint) validateFuncOutputsAreCorrect() {
 	if !me.isStdHttpHandler {
 		switch me.caller.outCount {
 		case 1:
-			if _, found := accepts[me.caller.outParams[0]]; !found {
+			_, found := accepts[me.caller.outParams[0]]
+			if !found && !strings.HasPrefix(me.caller.outParams[0], "st:") {
 				fmt.Println(me.caller.outParams[0])
-				fmt.Println(accepts)
 				panic("Incorrect return type found in: " + me.caller.name)
 			}
 		case 2:
 			if me.caller.outParams[0] != "int" {
 				panic("When a func returns two params, the first must be an int (http status code) : " + me.caller.name)
 			}
-			if _, found := accepts[me.caller.outParams[1]]; !found {
+			_, found := accepts[me.caller.outParams[1]]
+			if !found && !strings.HasPrefix(me.caller.outParams[1], "st:") {
 				panic("Incorrect return type for second return param found in: " + me.caller.name)
 			}
 		default:

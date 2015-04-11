@@ -1,6 +1,7 @@
 package aqua
 
 import (
+	"encoding/json"
 	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
@@ -141,6 +142,35 @@ func TestUrlNameConstruction(t *testing.T) {
 			url := fmt.Sprintf("http://localhost:%d/day/v1.0/any/api", port)
 			code, _, _ := getUrl(url, nil)
 			So(code, ShouldEqual, 200)
+		})
+	})
+}
+
+type structService struct {
+	RestService
+	getStruct GetApi
+}
+
+func (me *structService) GetStruct() Fixture {
+	return Fixture{
+		Version: "1.2.3",
+	}
+}
+
+func TestStructOutputIsAllowed(t *testing.T) {
+	s := NewRestServer()
+	s.AddService(&structService{})
+	port := getUniquePortForTestCase()
+	s.RunWith(port, false)
+
+	Convey("Given a service endpoint that retuns a struct", t, func() {
+		url := fmt.Sprintf("http://localhost:%d/struct/get-struct", port)
+		_, _, content := getUrl(url, nil)
+
+		Convey("Then the field(s) of the struct should have the same value as passed", func() {
+			var f Fixture
+			json.Unmarshal([]byte(content), &f)
+			So(f.Version, ShouldEqual, "1.2.3")
 		})
 	})
 }
