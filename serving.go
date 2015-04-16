@@ -37,8 +37,10 @@ func writeItem(w http.ResponseWriter, oType string, oVal reflect.Value, pretty s
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", strconv.Itoa(len(v)))
 		fmt.Fprintf(w, "%s", v)
-	case oType == "map":
-	case strings.HasPrefix(oType, "st:"):
+	case oType == "st:github.com/thejackrabbit/aqua.Sac":
+		s := oVal.Interface().(Sac)
+		writeItem(w, getSymbolFromType(reflect.TypeOf(s.Data)), reflect.ValueOf(s.Data), pretty)
+	case oType == "map", strings.HasPrefix(oType, "st:"):
 		var j []byte
 		if pretty == "true" {
 			j, _ = json.MarshalIndent(oVal.Interface(), "", "  ")
@@ -48,9 +50,6 @@ func writeItem(w http.ResponseWriter, oType string, oVal reflect.Value, pretty s
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(j)))
 		w.Write(j)
-	case oType == "st:github.com/thejackrabbit/aqua.Sac":
-		s := oVal.Interface().(Sac)
-		writeItem(w, getSymbolFromType(reflect.TypeOf(s.Data)), reflect.ValueOf(s.Data), pretty)
 	default:
 		fmt.Printf("Don't know how to return a: %s?\n", oType)
 	}
