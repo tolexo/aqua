@@ -5,6 +5,10 @@ import (
 	"reflect"
 )
 
+func init() {
+	structs.DefaultTagName = "json"
+}
+
 type Sac struct {
 	Data map[string]interface{}
 }
