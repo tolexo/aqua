@@ -194,7 +194,7 @@ func convertToType(vars []string, typ []string) []reflect.Value {
 		case "int":
 			j, err := strconv.Atoi(v)
 			if err != nil {
-				panic("Cannot conver " + v + " to type 'int'")
+				panic("Cannot convert " + v + " to type 'int'")
 			}
 			vals[i] = reflect.ValueOf(j)
 		default:
