@@ -19,6 +19,7 @@ var defaults Fixture = Fixture{
 }
 
 var release string = "0.0.1"
+var defaultPort int = 8090
 
 type RestServer struct {
 	Fixture
@@ -31,12 +32,10 @@ type RestServer struct {
 func NewRestServer() RestServer {
 	r := RestServer{
 		Fixture: defaults,
-		Server: http.Server{
-			Addr: ":8080",
-		},
-		mux:  mux.NewRouter(),
-		apis: make(map[string]endPoint),
-		mods: make(map[string]func(http.Handler) http.Handler),
+		Server:  http.Server{},
+		mux:     mux.NewRouter(),
+		apis:    make(map[string]endPoint),
+		mods:    make(map[string]func(http.Handler) http.Handler),
 	}
 	r.AddService(&CoreService{})
 	return r
@@ -137,6 +136,8 @@ func (me *RestServer) RunWith(port int, sync bool) {
 func startup(r *RestServer, port int) {
 	if port > 0 {
 		r.Addr = fmt.Sprintf(":%d", port)
+	} else if r.Server.Addr == "" {
+		r.Addr = fmt.Sprintf(":%d", defaultPort)
 	}
 	r.Server.Handler = r.mux
 	fmt.Println(r.ListenAndServe())
