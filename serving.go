@@ -42,8 +42,8 @@ func writeItem(w http.ResponseWriter, oType string, oVal reflect.Value, pretty s
 		writeItem(w, getSymbolFromType(reflect.TypeOf(s.Data)), reflect.ValueOf(s.Data), pretty)
 	case oType == "map", strings.HasPrefix(oType, "st:"):
 		var j []byte
-		if pretty == "true" {
-			j, _ = json.MarshalIndent(oVal.Interface(), "", "  ")
+		if pretty == "true" || pretty == "1" {
+			j, _ = json.MarshalIndent(oVal.Interface(), "", "\t")
 		} else {
 			j, _ = json.Marshal(oVal.Interface())
 		}
