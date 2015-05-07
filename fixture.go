@@ -12,6 +12,8 @@ type Fixture struct {
 	Pretty  string
 	Vendor  string
 	Modules string
+	Cache   string
+	Ttl     string
 }
 
 func NewFixtureFromTag(i interface{}, fieldName string) Fixture {
@@ -56,6 +58,16 @@ func NewFixtureFromTag(i interface{}, fieldName string) Fixture {
 		out.Modules = tmp
 	}
 
+	tmp = getTagValue(tag, "cache")
+	if tmp != "" {
+		out.Cache = tmp
+	}
+
+	tmp = getTagValue(tag, "ttl")
+	if tmp != "" {
+		out.Ttl = tmp
+	}
+
 	return out
 }
 
@@ -94,6 +106,12 @@ func resolveInOrder(e ...Fixture) Fixture {
 		}
 		if out.Modules == empty && ep.Modules != empty {
 			out.Modules = ep.Modules
+		}
+		if out.Cache == empty && ep.Cache != empty {
+			out.Cache = ep.Cache
+		}
+		if out.Ttl == empty && ep.Ttl != empty {
+			out.Ttl = ep.Ttl
 		}
 	}
 	return out

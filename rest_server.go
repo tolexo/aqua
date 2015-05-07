@@ -3,6 +3,7 @@ package aqua
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/thejackrabbit/aero/cache"
 	"net/http"
 	"reflect"
 	"strings"
@@ -27,6 +28,7 @@ type RestServer struct {
 	mux  *mux.Router
 	apis map[string]endPoint
 	mods map[string]func(http.Handler) http.Handler
+	cach map[string]cache.Cacher
 }
 
 func NewRestServer() RestServer {
@@ -36,6 +38,7 @@ func NewRestServer() RestServer {
 		mux:     mux.NewRouter(),
 		apis:    make(map[string]endPoint),
 		mods:    make(map[string]func(http.Handler) http.Handler),
+		cach:    make(map[string]cache.Cacher),
 	}
 	r.AddService(&CoreService{})
 	return r
@@ -45,8 +48,14 @@ var printed bool = false
 
 func (me *RestServer) AddModule(name string, f func(http.Handler) http.Handler) {
 	// TODO: check if the same key alread exists
-	// TODO: AddModule must always be called before AddService
+	// TODO: AddModule must be called before AddService
 	me.mods[name] = f
+}
+
+func (me *RestServer) AddCache(name string, c cache.Cacher) {
+	// TODO: check if the same key alread exists
+	// TODO: AddCache must be called before AddService
+	me.cach[name] = c
 }
 
 func (me *RestServer) AddService(svc interface{}) {
@@ -109,7 +118,7 @@ func (me *RestServer) AddService(svc interface{}) {
 
 		inv := NewMethodInvoker(svc, upFirstChar(field.Name))
 		if inv.exists {
-			ep := NewEndPoint(inv, fix, matchUrl, method, me.mods)
+			ep := NewEndPoint(inv, fix, matchUrl, method, me.mods, me.cach)
 			ep.setupMuxHandlers(me.mux)
 			me.apis[serviceId] = ep
 			fmt.Printf("%s\n", serviceId)

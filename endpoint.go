@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
+	"github.com/thejackrabbit/aero/cache"
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 )
 
 type endPoint struct {
@@ -20,9 +22,12 @@ type endPoint struct {
 	muxUrl  string
 	muxVars []string
 	modules []func(http.Handler) http.Handler
+	cach    cache.Cacher
 }
 
-func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod string, mods map[string]func(http.Handler) http.Handler) endPoint {
+func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod string, mods map[string]func(http.Handler) http.Handler,
+	caches map[string]cache.Cacher) endPoint {
+
 	out := endPoint{
 		caller:           inv,
 		info:             f,
@@ -32,6 +37,7 @@ func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod strin
 		muxVars:          extractRouteVars(matchUrl),
 		httpMethod:       httpMethod,
 		modules:          make([]func(http.Handler) http.Handler, 0),
+		cach:             nil,
 	}
 
 	out.isStdHttpHandler = out.signatureMatchesDefaultHttpHandler()
@@ -41,6 +47,7 @@ func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod strin
 	out.validateFuncInputsAreOfRightType()
 	out.validateFuncOutputsAreCorrect()
 
+	// Tag modules used by this endpoint
 	if mods != nil && f.Modules != "" {
 		names := strings.Split(f.Modules, ",")
 		out.modules = make([]func(http.Handler) http.Handler, 0)
@@ -52,6 +59,11 @@ func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod strin
 			}
 			out.modules = append(out.modules, fn)
 		}
+	}
+
+	// Tag the cache
+	if c, ok := caches[f.Cache]; ok {
+		out.cach = c
 	}
 
 	return out
@@ -174,9 +186,18 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		// todo: create less local variables
+		// TODO: create less local variables
+		// TODO: move vars to closure level
 
 		var out []reflect.Value
+
+		var useCache bool = false
+		var ttl time.Duration = 0 * time.Second
+		var val interface{}
+		var err error
+
+		ttl, err = time.ParseDuration(e.info.Ttl)
+		useCache = r.Method == "GET" && ttl > 0 && e.cach != nil
 
 		muxVals := mux.Vars(r)
 		params := make([]string, len(e.muxVars))
@@ -191,8 +212,47 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			if e.needsJarInput {
 				ref = append(ref, reflect.ValueOf(NewJar(r)))
 			}
-			out = e.caller.Do(ref)
+
+			// fetch from cache or hit it
+			if useCache {
+				val, err = e.cach.Get(r.RequestURI)
+				if err == nil {
+					out = getReflectValues(val)
+				} else {
+					out = e.caller.Do(ref)
+					e.cach.Set(r.RequestURI, getInterfaces(out), ttl)
+				}
+			} else {
+				out = e.caller.Do(ref)
+			}
 			writeOutput(w, e.caller.outParams, out, e.info.Pretty)
 		}
 	}
+}
+
+func getInterfaces(r []reflect.Value) []interface{} {
+	out := make([]interface{}, len(r))
+	for i, _ := range r {
+		out[i] = r[i].Interface()
+	}
+	return out
+}
+
+func getReflectValues(i interface{}) []reflect.Value {
+	a := i.([]interface{})
+
+	// if first item is int, it may get converted to float
+	if len(a) == 2 {
+		if _, ok := a[0].(int); !ok {
+			if flt, ok := a[0].(float64); ok {
+				a[0] = int(flt)
+			}
+		}
+	}
+
+	out := make([]reflect.Value, len(a))
+	for i, _ := range a {
+		out[i] = reflect.ValueOf(a[i])
+	}
+	return out
 }
