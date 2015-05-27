@@ -12,8 +12,9 @@ type Fixture struct {
 	Pretty  string
 	Vendor  string
 	Modules string
-	Cache   string
-	Ttl     string
+
+	Cache string // cache store
+	Ttl   string // cache ttl
 }
 
 func NewFixtureFromTag(i interface{}, fieldName string) Fixture {

@@ -42,10 +42,13 @@ func writeItem(w http.ResponseWriter, oType string, oVal reflect.Value, pretty s
 		writeItem(w, getSymbolFromType(reflect.TypeOf(s.Data)), reflect.ValueOf(s.Data), pretty)
 	case oType == "map", strings.HasPrefix(oType, "st:"):
 		var j []byte
+		var e error
 		if pretty == "true" || pretty == "1" {
-			j, _ = json.MarshalIndent(oVal.Interface(), "", "\t")
+			j, e = json.MarshalIndent(oVal.Interface(), "", "\t")
+			panicIf(e)
 		} else {
-			j, _ = json.Marshal(oVal.Interface())
+			j, e = json.Marshal(oVal.Interface())
+			panicIf(e)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Length", strconv.Itoa(len(j)))

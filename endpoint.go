@@ -1,10 +1,13 @@
 package aqua
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 	"github.com/thejackrabbit/aero/cache"
+	"github.com/thejackrabbit/aero/panik"
 	"net/http"
 	"reflect"
 	"strings"
@@ -22,7 +25,7 @@ type endPoint struct {
 	muxUrl  string
 	muxVars []string
 	modules []func(http.Handler) http.Handler
-	cach    cache.Cacher
+	stash   cache.Cacher
 }
 
 func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod string, mods map[string]func(http.Handler) http.Handler,
@@ -37,7 +40,7 @@ func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod strin
 		muxVars:          extractRouteVars(matchUrl),
 		httpMethod:       httpMethod,
 		modules:          make([]func(http.Handler) http.Handler, 0),
-		cach:             nil,
+		stash:            nil,
 	}
 
 	out.isStdHttpHandler = out.signatureMatchesDefaultHttpHandler()
@@ -63,7 +66,9 @@ func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod strin
 
 	// Tag the cache
 	if c, ok := caches[f.Cache]; ok {
-		out.cach = c
+		out.stash = c
+	} else if f.Cache != "" {
+		panic("Cache not found: " + f.Cache + " for " + matchUrl)
 	}
 
 	return out
@@ -193,11 +198,11 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 		var useCache bool = false
 		var ttl time.Duration = 0 * time.Second
-		var val interface{}
+		var val []byte
 		var err error
 
 		ttl, err = time.ParseDuration(e.info.Ttl)
-		useCache = r.Method == "GET" && ttl > 0 && e.cach != nil
+		useCache = r.Method == "GET" && ttl > 0 && e.stash != nil
 
 		muxVals := mux.Vars(r)
 		params := make([]string, len(e.muxVars))
@@ -206,6 +211,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		}
 
 		if e.isStdHttpHandler {
+			//TODO: caching of standard handler
 			e.caller.Do([]reflect.Value{reflect.ValueOf(w), reflect.ValueOf(r)})
 		} else {
 			ref := convertToType(params, e.caller.inpParams)
@@ -215,44 +221,82 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 			// fetch from cache or hit it
 			if useCache {
-				val, err = e.cach.Get(r.RequestURI)
+				val, err = e.stash.Get(r.RequestURI)
 				if err == nil {
-					out = getReflectValues(val)
+					// fmt.Print(".")
+					out = decomposeCachedValues(val, e.caller.outParams)
 				} else {
 					out = e.caller.Do(ref)
-					e.cach.Set(r.RequestURI, getInterfaces(out), ttl)
+					bytes := prepareForCaching(out, e.caller.outParams)
+					e.stash.Set(r.RequestURI, bytes, ttl)
+					// fmt.Print(":", len(bytes))
 				}
 			} else {
 				out = e.caller.Do(ref)
+				// fmt.Print("!")
 			}
 			writeOutput(w, e.caller.outParams, out, e.info.Pretty)
 		}
 	}
 }
 
-func getInterfaces(r []reflect.Value) []interface{} {
-	out := make([]interface{}, len(r))
+func prepareForCaching(r []reflect.Value, outputParams []string) []byte {
+
+	var err error
+	buf := new(bytes.Buffer)
+	encd := json.NewEncoder(buf)
+
 	for i, _ := range r {
-		out[i] = r[i].Interface()
-	}
-	return out
-}
-
-func getReflectValues(i interface{}) []reflect.Value {
-	a := i.([]interface{})
-
-	// if first item is int, it may get converted to float
-	if len(a) == 2 {
-		if _, ok := a[0].(int); !ok {
-			if flt, ok := a[0].(float64); ok {
-				a[0] = int(flt)
-			}
+		switch outputParams[i] {
+		case "int":
+			err = encd.Encode(r[i].Int())
+			panik.On(err)
+		case "map":
+			err = encd.Encode(r[i].Interface().(map[string]interface{}))
+			panik.On(err)
+		case "string":
+			err = encd.Encode(r[i].String())
+			panik.On(err)
+		default:
+			panic("Unknown type of output to be sent to endpoint cache")
 		}
 	}
 
-	out := make([]reflect.Value, len(a))
-	for i, _ := range a {
-		out[i] = reflect.ValueOf(a[i])
+	return buf.Bytes()
+}
+
+func decomposeCachedValues(data []byte, outputParams []string) []reflect.Value {
+
+	var err error
+	buf := bytes.NewBuffer(data)
+	decd := json.NewDecoder(buf)
+	out := make([]reflect.Value, len(outputParams))
+
+	for i, o := range outputParams {
+		switch o {
+		case "int":
+			var j int
+			err = decd.Decode(&j)
+			panik.On(err)
+			// fmt.Println("Inty:", j)
+			out[i] = reflect.ValueOf(j)
+		case "map":
+			var m map[string]interface{}
+			err = decd.Decode(&m)
+			panik.On(err)
+			// fmt.Println("Mapy:", m)
+			out[i] = reflect.ValueOf(m)
+		case "string":
+			var s string
+			err = decd.Decode(&s)
+			panik.On(err)
+			// fmt.Println("Stringy:", s)
+			out[i] = reflect.ValueOf(s)
+		default:
+			panic("Unknown type of output to be sent to endpoint cache:" + o)
+		}
 	}
+
 	return out
+
 }

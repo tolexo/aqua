@@ -25,10 +25,10 @@ var defaultPort int = 8090
 type RestServer struct {
 	Fixture
 	http.Server
-	mux  *mux.Router
-	apis map[string]endPoint
-	mods map[string]func(http.Handler) http.Handler
-	cach map[string]cache.Cacher
+	mux    *mux.Router
+	apis   map[string]endPoint
+	mods   map[string]func(http.Handler) http.Handler
+	stores map[string]cache.Cacher
 }
 
 func NewRestServer() RestServer {
@@ -38,7 +38,7 @@ func NewRestServer() RestServer {
 		mux:     mux.NewRouter(),
 		apis:    make(map[string]endPoint),
 		mods:    make(map[string]func(http.Handler) http.Handler),
-		cach:    make(map[string]cache.Cacher),
+		stores:  make(map[string]cache.Cacher),
 	}
 	r.AddService(&CoreService{})
 	return r
@@ -55,7 +55,7 @@ func (me *RestServer) AddModule(name string, f func(http.Handler) http.Handler) 
 func (me *RestServer) AddCache(name string, c cache.Cacher) {
 	// TODO: check if the same key alread exists
 	// TODO: AddCache must be called before AddService
-	me.cach[name] = c
+	me.stores[name] = c
 }
 
 func (me *RestServer) AddService(svc interface{}) {
@@ -118,7 +118,7 @@ func (me *RestServer) AddService(svc interface{}) {
 
 		inv := NewMethodInvoker(svc, upFirstChar(field.Name))
 		if inv.exists {
-			ep := NewEndPoint(inv, fix, matchUrl, method, me.mods, me.cach)
+			ep := NewEndPoint(inv, fix, matchUrl, method, me.mods, me.stores)
 			ep.setupMuxHandlers(me.mux)
 			me.apis[serviceId] = ep
 			fmt.Printf("%s\n", serviceId)
