@@ -201,7 +201,10 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		var val []byte
 		var err error
 
-		ttl, err = time.ParseDuration(e.info.Ttl)
+		if e.info.Ttl != "" {
+			ttl, err = time.ParseDuration(e.info.Ttl)
+			panik.On(err)
+		}
 		useCache = r.Method == "GET" && ttl > 0 && e.stash != nil
 
 		muxVals := mux.Vars(r)

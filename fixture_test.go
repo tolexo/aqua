@@ -11,13 +11,15 @@ func TestFixtureResolveInOrder(t *testing.T) {
 		a := Fixture{Root: "root1"}
 		b := Fixture{Root: "root2", Url: "path2"}
 		c := Fixture{Root: "root3", Url: "path3", Version: "version3"}
-		d := Fixture{Root: "root4", Url: "path4", Version: "version4", Pretty: "true"}
-		e := Fixture{Root: "root5", Url: "path5", Version: "version5", Pretty: "false", Vendor: "vnd.app"}
-		f := Fixture{Root: "root6", Url: "path6", Version: "version6", Pretty: "true", Vendor: "vnd.app6", Prefix: "pre"}
-		g := Fixture{Root: "root7", Url: "path7", Version: "version7", Pretty: "true", Vendor: "vnd.app7 ", Prefix: "pre7", Modules: "mod7"}
+		d := Fixture{Root: "root4", Url: "path4", Version: "version4", Pretty: "false"}
+		e := Fixture{Root: "root5", Url: "path5", Version: "version5", Pretty: "true", Vendor: "vnd.app5"}
+		f := Fixture{Root: "root6", Url: "path6", Version: "version6", Pretty: "true", Vendor: "vnd.app6", Prefix: "pre6"}
+		g := Fixture{Root: "root8", Url: "path7", Version: "version7", Pretty: "true", Vendor: "vnd.app7", Prefix: "pre7", Modules: "mod7"}
+		h := Fixture{Root: "root9", Url: "path8", Version: "version8", Pretty: "true", Vendor: "vnd.app8", Prefix: "pre8", Modules: "mod8", Cache: "cache8"}
+		i := Fixture{Root: "root10", Url: "path9", Version: "version9", Pretty: "true", Vendor: "vnd.app9", Prefix: "pre9", Modules: "mod9", Cache: "cache9", Ttl: "ttl9"}
 
 		Convey("Then resolveInOrder() should pick the first non empty value from fixtures in the given order", func() {
-			z := resolveInOrder(a, b, c, d, e, f, g)
+			z := resolveInOrder(a, b, c, d, e, f, g, h, i)
 			So(z.Root, ShouldEqual, a.Root)
 			So(z.Url, ShouldEqual, b.Url)
 			So(z.Version, ShouldEqual, c.Version)
@@ -25,6 +27,7 @@ func TestFixtureResolveInOrder(t *testing.T) {
 			So(z.Vendor, ShouldEqual, e.Vendor)
 			So(z.Prefix, ShouldEqual, f.Prefix)
 			So(z.Modules, ShouldEqual, g.Modules)
+			So(z.Cache, ShouldEqual, h.Cache)
 		})
 	})
 }

@@ -17,6 +17,8 @@ var defaults Fixture = Fixture{
 	Pretty:  "false",
 	Vendor:  "vnd.api",
 	Modules: "",
+	Cache:   "",
+	Ttl:     "",
 }
 
 var release string = "0.0.1"
@@ -122,6 +124,7 @@ func (me *RestServer) AddService(svc interface{}) {
 			ep.setupMuxHandlers(me.mux)
 			me.apis[serviceId] = ep
 			fmt.Printf("%s\n", serviceId)
+			//fmt.Println(fix)
 		}
 	}
 }
