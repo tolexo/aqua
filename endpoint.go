@@ -229,7 +229,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 					out = e.caller.Do(ref)
 					bytes := prepareForCaching(out, e.caller.outParams)
 					e.stash.Set(r.RequestURI, bytes, ttl)
-					// fmt.Print(":", len(bytes))
+					// fmt.Print(":", len(bytes), r.RequestURI)
 				}
 			} else {
 				out = e.caller.Do(ref)
@@ -257,8 +257,10 @@ func prepareForCaching(r []reflect.Value, outputParams []string) []byte {
 		case "string":
 			err = encd.Encode(r[i].String())
 			panik.On(err)
+		case "*st:github.com/thejackrabbit/aqua.Sac":
+			err = encd.Encode(r[i].Elem().Interface().(Sac).Data)
 		default:
-			panic("Unknown type of output to be sent to endpoint cache")
+			panic("Unknown type of output to be sent to endpoint cache: " + outputParams[i])
 		}
 	}
 
@@ -278,22 +280,26 @@ func decomposeCachedValues(data []byte, outputParams []string) []reflect.Value {
 			var j int
 			err = decd.Decode(&j)
 			panik.On(err)
-			// fmt.Println("Inty:", j)
 			out[i] = reflect.ValueOf(j)
 		case "map":
 			var m map[string]interface{}
 			err = decd.Decode(&m)
 			panik.On(err)
-			// fmt.Println("Mapy:", m)
 			out[i] = reflect.ValueOf(m)
 		case "string":
 			var s string
 			err = decd.Decode(&s)
 			panik.On(err)
-			// fmt.Println("Stringy:", s)
+			out[i] = reflect.ValueOf(s)
+		case "*st:github.com/thejackrabbit/aqua.Sac":
+			var m map[string]interface{}
+			err = decd.Decode(&m)
+			panik.On(err)
+			s := NewSac()
+			s.Data = m
 			out[i] = reflect.ValueOf(s)
 		default:
-			panic("Unknown type of output to be sent to endpoint cache:" + o)
+			panic("Unknown type of output to be decoded from endpoint cache:" + o)
 		}
 	}
 
