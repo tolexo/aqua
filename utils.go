@@ -143,7 +143,7 @@ func postUrl(uri string, post map[string]string, headers map[string]string) (htt
 	return resp.StatusCode, resp.Header.Get("Content-Type"), string(data)
 }
 
-var portForTesting int = 8085
+var portForTesting int = 8095
 
 func getUniquePortForTestCase() int {
 	portForTesting++

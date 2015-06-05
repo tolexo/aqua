@@ -43,12 +43,14 @@ func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod strin
 		stash:            nil,
 	}
 
-	out.isStdHttpHandler = out.signatureMatchesDefaultHttpHandler()
-	out.needsJarInput = out.needsVariableJar()
+	if f.Stub == "" {
+		out.isStdHttpHandler = out.signatureMatchesDefaultHttpHandler()
+		out.needsJarInput = out.needsVariableJar()
 
-	out.validateMuxVarsMatchFuncInputs()
-	out.validateFuncInputsAreOfRightType()
-	out.validateFuncOutputsAreCorrect()
+		out.validateMuxVarsMatchFuncInputs()
+		out.validateFuncInputsAreOfRightType()
+		out.validateFuncOutputsAreCorrect()
+	}
 
 	// Tag modules used by this endpoint
 	if mods != nil && f.Modules != "" {
@@ -189,6 +191,20 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 }
 
 func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
+
+	// return stub
+	if e.info.Stub != "" {
+		return func(w http.ResponseWriter, r *http.Request) {
+			d, err := getContent(e.info.Stub)
+			if err == nil {
+				fmt.Fprintf(w, "%s", d)
+			} else {
+				w.WriteHeader(400)
+				fmt.Fprintf(w, "{ message: \"%s\"}", "Stub path not found")
+			}
+		}
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// TODO: create less local variables
@@ -221,6 +237,8 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			if e.needsJarInput {
 				ref = append(ref, reflect.ValueOf(NewJar(r)))
 			}
+
+			//TODO: if 500 then don't cache
 
 			// fetch from cache or hit it
 			if useCache {
