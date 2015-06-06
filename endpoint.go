@@ -238,9 +238,6 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 				ref = append(ref, reflect.ValueOf(NewJar(r)))
 			}
 
-			//TODO: if 500 then don't cache
-
-			// fetch from cache or hit it
 			if useCache {
 				val, err = e.stash.Get(r.RequestURI)
 				if err == nil {
@@ -248,9 +245,18 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 					out = decomposeCachedValues(val, e.caller.outParams)
 				} else {
 					out = e.caller.Do(ref)
-					bytes := prepareForCaching(out, e.caller.outParams)
-					e.stash.Set(r.RequestURI, bytes, ttl)
-					// fmt.Print(":", len(bytes), r.RequestURI)
+					if len(out) == 2 && e.caller.outParams[0] == "int" {
+						code := out[0].Int()
+						if code < 200 || code > 299 {
+							useCache = false
+						}
+					}
+					if useCache {
+						bytes := prepareForCaching(out, e.caller.outParams)
+						e.stash.Set(r.RequestURI, bytes, ttl)
+						// fmt.Print(":", len(bytes), r.RequestURI)
+					}
+
 				}
 			} else {
 				out = e.caller.Do(ref)
