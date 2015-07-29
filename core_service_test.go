@@ -11,7 +11,8 @@ func TestCoreFunctions(t *testing.T) {
 
 	s := NewRestServer()
 	port := getUniquePortForTestCase()
-	s.RunWith(port, false)
+	s.Port = port
+	s.RunAsync()
 
 	Convey("When you start a RestServer", t, func() {
 

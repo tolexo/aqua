@@ -21,14 +21,14 @@ func TestDefaultConfiguration(t *testing.T) {
 
 func TestGetShouldNotHonourPost(t *testing.T) {
 	s := NewRestServer()
-	port := getUniquePortForTestCase()
-	s.RunWith(port, false)
+	s.Port = getUniquePortForTestCase()
+	s.RunAsync()
 
 	Convey("Given a RestServer", t, func() {
 		Convey("A url set for Http GET should return 404 for POST", func() {
 			postData := make(map[string]string)
 			postData["abc"] = "def"
-			url := fmt.Sprintf("http://localhost:%d/aqua/ping", port)
+			url := fmt.Sprintf("http://localhost:%d/aqua/ping", s.Port)
 			code, _, _ := postUrl(url, postData, nil)
 			So(code, ShouldEqual, 404)
 		})

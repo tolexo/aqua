@@ -16,13 +16,13 @@ func TestStubFileMissing(t *testing.T) {
 
 	s := NewRestServer()
 	s.AddService(&stubService{})
-	port := getUniquePortForTestCase()
-	s.RunWith(port, false)
+	s.Port = getUniquePortForTestCase()
+	s.RunAsync()
 
 	Convey("Given a service stub", t, func() {
-		Convey("And when the corresponding stub file is missing in current AND executable dir", func() {
+		Convey("When the corresponding stub file is missing in current AND executable dir", func() {
 			Convey("Then the server should return 400 series error", func() {
-				url := fmt.Sprintf("http://localhost:%d/stub/mock-no-file", port)
+				url := fmt.Sprintf("http://localhost:%d/stub/mock-no-file", s.Port)
 				code, _, content := getUrl(url, nil)
 				So(code, ShouldEqual, 400)
 				fmt.Println(content)
@@ -36,13 +36,13 @@ func TestMockStub(t *testing.T) {
 
 	s := NewRestServer()
 	s.AddService(&stubService{})
-	port := getUniquePortForTestCase()
-	s.RunWith(port, false)
+	s.Port = getUniquePortForTestCase()
+	s.RunAsync()
 
 	Convey("Given a service stub", t, func() {
-		Convey("And when the corresponding stub file is found in current OR executable dir", func() {
+		Convey("When the corresponding stub file is found in current OR executable dir", func() {
 			Convey("Then the server should return content of file", func() {
-				url := fmt.Sprintf("http://localhost:%d/stub/mock", port)
+				url := fmt.Sprintf("http://localhost:%d/stub/mock", s.Port)
 				_, _, content := getUrl(url, nil)
 				So(content, ShouldEqual, "MOCK DATA")
 			})

@@ -3,6 +3,7 @@ package aqua
 import (
 	"bytes"
 	"fmt"
+	"github.com/thejackrabbit/aero/panik"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -194,11 +195,11 @@ func convertToType(vars []string, typ []string) []reflect.Value {
 		case "int":
 			j, err := strconv.Atoi(v)
 			if err != nil {
-				panic("Cannot convert " + v + " to type 'int'")
+				panik.Do("Cannot convert [%s] to 'int'", v)
 			}
 			vals[i] = reflect.ValueOf(j)
 		default:
-			panic("Type not supported " + t)
+			panik.Do("Type [%s] is not supported", t)
 		}
 	}
 	return vals

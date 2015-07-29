@@ -1,13 +1,12 @@
 package aqua
 
-type GetApi struct{ Fixture }
-type PostApi struct{ Fixture }
-type PutApi struct{ Fixture }
-type PatchApi struct{ Fixture }
-type DeleteApi struct{ Fixture }
+type Api struct{ Fixture }
 
-type GetAction struct{ Fixture }
-type PostAction struct{ Fixture }
+type GetApi struct{ Api }
+type PostApi struct{ Api }
+type PutApi struct{ Api }
+type PatchApi struct{ Api }
+type DeleteApi struct{ Api }
 
 // type bingoService struct {
 // 	RestService

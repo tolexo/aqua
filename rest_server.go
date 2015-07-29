@@ -27,6 +27,7 @@ var defaultPort int = 8090
 type RestServer struct {
 	Fixture
 	http.Server
+	Port   int
 	mux    *mux.Router
 	apis   map[string]endPoint
 	mods   map[string]func(http.Handler) http.Handler
@@ -37,6 +38,7 @@ func NewRestServer() RestServer {
 	r := RestServer{
 		Fixture: defaults,
 		Server:  http.Server{},
+		Port:    defaultPort,
 		mux:     mux.NewRouter(),
 		apis:    make(map[string]endPoint),
 		mods:    make(map[string]func(http.Handler) http.Handler),
@@ -55,7 +57,7 @@ func (me *RestServer) AddModule(name string, f func(http.Handler) http.Handler) 
 }
 
 func (me *RestServer) AddCache(name string, c cache.Cacher) {
-	// TODO: check if the same key alread exists
+	// TODO: check if the same key already exists
 	// TODO: AddCache must be called before AddService
 	me.stores[name] = c
 }
@@ -130,26 +132,22 @@ func (me *RestServer) AddService(svc interface{}) {
 }
 
 func (me *RestServer) Run() {
-	me.RunWith(0, true)
+	startup(me, me.Port)
 }
 
-func (me *RestServer) RunWith(port int, sync bool) {
-	if sync {
-		startup(me, port)
-	} else {
-		go startup(me, port)
+func (me *RestServer) RunAsync() {
+	go startup(me, me.Port)
 
-		// TODO: don't sleep, check for the server to come up, and panic if
-		// it doesn't even after 5 sec
-		time.Sleep(time.Millisecond * 50)
-	}
+	// TODO: don't sleep, check for the server to come up, and panic if
+	// it doesn't even after 5 sec
+	time.Sleep(time.Millisecond * 50)
 }
 
 func startup(r *RestServer, port int) {
 	if port > 0 {
 		r.Addr = fmt.Sprintf(":%d", port)
 	} else if r.Server.Addr == "" {
-		r.Addr = fmt.Sprintf(":%d", defaultPort)
+		r.Addr = fmt.Sprintf(":%d", port)
 	}
 	r.Server.Handler = r.mux
 	fmt.Println(r.ListenAndServe())

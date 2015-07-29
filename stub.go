@@ -13,13 +13,14 @@ func getContent(path string) (string, error) {
 	var absPath string
 	var exists bool
 
+	// if absolute path, try to find the file directly
 	if strings.HasPrefix(path, "/") {
 		absPath = path
 		_, err := os.Stat(absPath)
 		exists = err == nil
 	}
+	// try to locate it in working directory
 	if !exists {
-		// try working directory
 		wdir, ferr := os.Getwd()
 		if ferr == nil {
 			absPath = removeMultSlashes(wdir + "/" + path)
@@ -27,8 +28,8 @@ func getContent(path string) (string, error) {
 			exists = err == nil
 		}
 	}
+	// try to locate it in executable directory
 	if !exists {
-		// try executable directory
 		edir, ferr := osext.ExecutableFolder()
 		if ferr == nil {
 			absPath = removeMultSlashes(edir + "/" + path)

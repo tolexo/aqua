@@ -73,23 +73,23 @@ func TestVersionCapability(t *testing.T) {
 	s := NewRestServer()
 	s.AddService(&verService{})
 	s.AddService(&newVerService{})
-	port := getUniquePortForTestCase()
-	s.RunWith(port, false)
+	s.Port = getUniquePortForTestCase()
+	s.RunAsync()
 
 	Convey("Given a GET endpoint specified as version 1", t, func() {
 		Convey("Then the servers should return 404 for direct calls", func() {
-			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
+			url := fmt.Sprintf("http://localhost:%d/versioning/api", s.Port)
 			code, _, _ := getUrl(url, nil)
 			So(code, ShouldEqual, 404)
 		})
 		Convey("Then the servers should honour urls with version prefix", func() {
-			url := fmt.Sprintf("http://localhost:%d/v1/versioning/api", port)
+			url := fmt.Sprintf("http://localhost:%d/v1/versioning/api", s.Port)
 			code, _, content := getUrl(url, nil)
 			So(code, ShouldEqual, 200)
 			So(content, ShouldEqual, "one")
 		})
 		Convey("Then the servers should honour urls with accept headers of style1", func() {
-			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
+			url := fmt.Sprintf("http://localhost:%d/versioning/api", s.Port)
 			head := make(map[string]string)
 			head["Accept"] = "application/" + defaults.Vendor + "-v1+json"
 			code, _, content := getUrl(url, head)
@@ -97,7 +97,7 @@ func TestVersionCapability(t *testing.T) {
 			So(content, ShouldEqual, "one")
 		})
 		Convey("Then the servers should honour urls with accept headers of style2", func() {
-			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
+			url := fmt.Sprintf("http://localhost:%d/versioning/api", s.Port)
 			head := make(map[string]string)
 			head["Accept"] = "application/" + defaults.Vendor + "+json;version=1"
 			code, _, content := getUrl(url, head)
@@ -105,7 +105,7 @@ func TestVersionCapability(t *testing.T) {
 			So(content, ShouldEqual, "one")
 		})
 		Convey("Then an endpoint in the same service with the same url but different version should be independant", func() {
-			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
+			url := fmt.Sprintf("http://localhost:%d/versioning/api", s.Port)
 			head := make(map[string]string)
 			head["Accept"] = "application/" + defaults.Vendor + "-v2+json"
 			code, _, content := getUrl(url, head)
@@ -113,7 +113,7 @@ func TestVersionCapability(t *testing.T) {
 			So(content, ShouldEqual, "two")
 		})
 		Convey("Then an endpoint in a different service with the same url but different version should be independant", func() {
-			url := fmt.Sprintf("http://localhost:%d/versioning/api", port)
+			url := fmt.Sprintf("http://localhost:%d/versioning/api", s.Port)
 			head := make(map[string]string)
 			head["Accept"] = "application/" + defaults.Vendor + "-v3+json"
 			code, _, content := getUrl(url, head)
@@ -134,12 +134,12 @@ func TestUrlNameConstruction(t *testing.T) {
 
 	s := NewRestServer()
 	s.AddService(&namingServ{})
-	port := getUniquePortForTestCase()
-	s.RunWith(port, false)
+	s.Port = getUniquePortForTestCase()
+	s.RunAsync()
 
 	Convey("Given a GET endpoint specified with prefix, folder, version and url", t, func() {
 		Convey("Then the complete url should be combination of above all", func() {
-			url := fmt.Sprintf("http://localhost:%d/day/v1.0/any/api", port)
+			url := fmt.Sprintf("http://localhost:%d/day/v1.0/any/api", s.Port)
 			code, _, _ := getUrl(url, nil)
 			So(code, ShouldEqual, 200)
 		})
@@ -160,11 +160,11 @@ func (me *structService) GetStruct() Fixture {
 func TestStructOutputIsAllowed(t *testing.T) {
 	s := NewRestServer()
 	s.AddService(&structService{})
-	port := getUniquePortForTestCase()
-	s.RunWith(port, false)
+	s.Port = getUniquePortForTestCase()
+	s.RunAsync()
 
 	Convey("Given a service endpoint that retuns a struct", t, func() {
-		url := fmt.Sprintf("http://localhost:%d/struct/get-struct", port)
+		url := fmt.Sprintf("http://localhost:%d/struct/get-struct", s.Port)
 		_, _, content := getUrl(url, nil)
 
 		Convey("Then the field(s) of the struct should have the same value as passed", func() {
@@ -173,4 +173,9 @@ func TestStructOutputIsAllowed(t *testing.T) {
 			So(f.Version, ShouldEqual, "1.2.3")
 		})
 	})
+}
+
+
+type dbService {
+	RestService
 }
