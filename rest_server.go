@@ -143,6 +143,15 @@ func (me *RestServer) RunAsync() {
 	time.Sleep(time.Millisecond * 50)
 }
 
+func (me *RestServer) RunWith(port int, sync bool) {
+	me.Port = port
+	if sync {
+		me.Run()
+	} else {
+		me.RunAsync()
+	}
+}
+
 func startup(r *RestServer, port int) {
 	if port > 0 {
 		r.Addr = fmt.Sprintf(":%d", port)
