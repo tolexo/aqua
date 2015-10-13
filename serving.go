@@ -37,7 +37,7 @@ func writeItem(w http.ResponseWriter, oType string, oVal reflect.Value, pretty s
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", strconv.Itoa(len(v)))
 		fmt.Fprintf(w, "%s", v)
-	case oType == "st:github.com/thejackrabbit/aqua.Sac":
+	case oType == "st:github.com/tolexo/aqua.Sac":
 		s := oVal.Interface().(Sac)
 		writeItem(w, getSymbolFromType(reflect.TypeOf(s.Data)), reflect.ValueOf(s.Data), pretty)
 	case oType == "map", strings.HasPrefix(oType, "st:"):

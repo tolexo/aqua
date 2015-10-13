@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
-	"github.com/thejackrabbit/aero/cache"
-	"github.com/thejackrabbit/aero/panik"
+	"github.com/tolexo/aero/cache"
+	"github.com/tolexo/aero/panik"
 	"net/http"
 	"reflect"
 	"strings"
@@ -86,11 +86,11 @@ func (me *endPoint) signatureMatchesDefaultHttpHandler() bool {
 func (me *endPoint) needsVariableJar() bool {
 	// needs jar input as the last parameter
 	for i := 0; i < len(me.caller.inpParams)-1; i++ {
-		if me.caller.inpParams[i] == "st:github.com/thejackrabbit/aqua.Jar" {
+		if me.caller.inpParams[i] == "st:github.com/tolexo/aqua.Jar" {
 			panic("Jar parameter should be the last one: " + me.caller.name)
 		}
 	}
-	return me.caller.inpCount > 0 && me.caller.inpParams[me.caller.inpCount-1] == "st:github.com/thejackrabbit/aqua.Jar"
+	return me.caller.inpCount > 0 && me.caller.inpParams[me.caller.inpCount-1] == "st:github.com/tolexo/aqua.Jar"
 }
 
 func (me *endPoint) validateMuxVarsMatchFuncInputs() {
@@ -112,7 +112,7 @@ func (me *endPoint) validateFuncInputsAreOfRightType() {
 	if !me.isStdHttpHandler {
 		for _, s := range me.caller.inpParams {
 			switch s {
-			case "st:github.com/thejackrabbit/aqua.Jar":
+			case "st:github.com/tolexo/aqua.Jar":
 			case "int":
 			case "string":
 			default:
@@ -127,8 +127,8 @@ func (me *endPoint) validateFuncOutputsAreCorrect() {
 	var accepts = make(map[string]bool)
 	accepts["string"] = true
 	accepts["map"] = true
-	accepts["st:github.com/thejackrabbit/aqua.Sac"] = true
-	accepts["*st:github.com/thejackrabbit/aqua.Sac"] = true
+	accepts["st:github.com/tolexo/aqua.Sac"] = true
+	accepts["*st:github.com/tolexo/aqua.Sac"] = true
 
 	if !me.isStdHttpHandler {
 		switch me.caller.outCount {
@@ -284,7 +284,7 @@ func prepareForCaching(r []reflect.Value, outputParams []string) []byte {
 		case "string":
 			err = encd.Encode(r[i].String())
 			panik.On(err)
-		case "*st:github.com/thejackrabbit/aqua.Sac":
+		case "*st:github.com/tolexo/aqua.Sac":
 			err = encd.Encode(r[i].Elem().Interface().(Sac).Data)
 		default:
 			panic("Unknown type of output to be sent to endpoint cache: " + outputParams[i])
@@ -318,7 +318,7 @@ func decomposeCachedValues(data []byte, outputParams []string) []reflect.Value {
 			err = decd.Decode(&s)
 			panik.On(err)
 			out[i] = reflect.ValueOf(s)
-		case "*st:github.com/thejackrabbit/aqua.Sac":
+		case "*st:github.com/tolexo/aqua.Sac":
 			var m map[string]interface{}
 			err = decd.Decode(&m)
 			panik.On(err)
