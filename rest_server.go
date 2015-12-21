@@ -48,6 +48,13 @@ func NewRestServer() RestServer {
 	return r
 }
 
+func (me *RestServer) AddNotFoundHandler(name http.HandlerFunc) {
+	handlerType := reflect.TypeOf(name)
+	if handlerType.Kind() == reflect.Func {
+		me.mux.NotFoundHandler = http.HandlerFunc(name)
+	}
+}
+
 var printed bool = false
 
 func (me *RestServer) AddModule(name string, f func(http.Handler) http.Handler) {
