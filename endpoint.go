@@ -7,6 +7,7 @@ import (
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 	"github.com/tolexo/aero/cache"
+	monit "github.com/tolexo/aero/monit"
 	"github.com/tolexo/aero/panik"
 	"net/http"
 	"reflect"
@@ -22,14 +23,15 @@ type endPoint struct {
 	isStdHttpHandler bool
 	needsJarInput    bool
 
-	muxUrl  string
-	muxVars []string
-	modules []func(http.Handler) http.Handler
-	stash   cache.Cacher
+	muxUrl    string
+	muxVars   []string
+	modules   []func(http.Handler) http.Handler
+	stash     cache.Cacher
+	serviceId string
 }
 
 func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod string, mods map[string]func(http.Handler) http.Handler,
-	caches map[string]cache.Cacher) endPoint {
+	caches map[string]cache.Cacher, serviceId string) endPoint {
 
 	out := endPoint{
 		caller:           inv,
@@ -41,6 +43,7 @@ func NewEndPoint(inv MethodInvoker, f Fixture, matchUrl string, httpMethod strin
 		httpMethod:       httpMethod,
 		modules:          make([]func(http.Handler) http.Handler, 0),
 		stash:            nil,
+		serviceId:        serviceId,
 	}
 
 	if f.Stub == "" {
@@ -207,10 +210,32 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		cacheHit := false
+
 		// TODO: create less local variables
 		// TODO: move vars to closure level
 
 		var out []reflect.Value
+
+		defer func(reqStartTime time.Time) {
+			go func() {
+				if e.serviceId != "" {
+					dur := time.Since(reqStartTime).Seconds() * 1000
+					var responseCode int64
+					if out != nil && len(out) == 2 && e.caller.outParams[0] == "int" {
+						responseCode = out[0].Int()
+					}
+					monitorParams := monit.MonitorParams{
+						ServiceId:    e.serviceId,
+						RespTime:     dur,
+						ResponseCode: responseCode,
+						CacheHit:     cacheHit,
+					}
+					monit.MonitorMe(monitorParams)
+
+				}
+			}()
+		}(time.Now())
 
 		var useCache bool = false
 		var ttl time.Duration = 0 * time.Second
@@ -241,6 +266,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			if useCache {
 				val, err = e.stash.Get(r.RequestURI)
 				if err == nil {
+					cacheHit = true
 					// fmt.Print(".")
 					out = decomposeCachedValues(val, e.caller.outParams)
 				} else {
