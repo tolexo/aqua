@@ -221,14 +221,14 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		defer func(reqStartTime time.Time) {
 			go func() {
 				if e.serviceId != "" {
-					dur := time.Since(reqStartTime).Seconds() * 1000
+					respTime := time.Since(reqStartTime).Seconds() * 1000
 					var responseCode int64
 					if out != nil && len(out) == 2 && e.caller.outParams[0] == "int" {
 						responseCode = out[0].Int()
 					}
 					monitorParams := monit.MonitorParams{
 						ServiceId:    e.serviceId,
-						RespTime:     dur,
+						RespTime:     respTime,
 						ResponseCode: responseCode,
 						CacheHit:     cacheHit,
 					}
