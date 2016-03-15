@@ -232,7 +232,6 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 						CacheHit:     cacheHit,
 					}
 					monit.MonitorMe(monitorParams)
-
 				}
 			}()
 		}(time.Now())
