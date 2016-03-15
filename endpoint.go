@@ -217,6 +217,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 		var out []reflect.Value
 
+		//TODO: capture this using instrumentation handler
 		defer func(reqStartTime time.Time) {
 			go func() {
 				if e.serviceId != "" {
