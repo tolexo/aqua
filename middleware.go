@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tolexo/aero/db/orm"
+	//"github.com/tolexo/aero/db/orm"
 	"github.com/tolexo/aero/panik"
 )
 
@@ -42,7 +42,7 @@ func ModSlowLog(path string, msec int) func(http.Handler) http.Handler {
 		})
 	}
 }
-
+/*
 func ModDBStatsLog(path string) func(http.Handler) http.Handler {
 
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -59,4 +59,4 @@ func ModDBStatsLog(path string) func(http.Handler) http.Handler {
 			l.Printf("%s %s Conn::before:%d after:%d diff:%d", r.Method, r.RequestURI, before, after, (after - before))
 		})
 	}
-}
+}*/
