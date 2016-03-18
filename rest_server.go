@@ -129,7 +129,7 @@ func (me *RestServer) AddService(svc interface{}) {
 
 		inv := NewMethodInvoker(svc, upFirstChar(field.Name))
 		if inv.exists || fix.Stub != "" {
-			ep := NewEndPoint(inv, fix, matchUrl, method, me.mods, me.stores)
+			ep := NewEndPoint(inv, fix, matchUrl, method, me.mods, me.stores, serviceId)
 			ep.setupMuxHandlers(me.mux)
 			me.apis[serviceId] = ep
 			fmt.Printf("%s\n", serviceId)
