@@ -222,7 +222,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			go func() {
 				if e.serviceId != "" {
 					respTime := time.Since(reqStartTime).Seconds() * 1000
-					var responseCode int64
+					var responseCode int64 = 200
 					if out != nil && len(out) == 2 && e.caller.outParams[0] == "int" {
 						responseCode = out[0].Int()
 					}
