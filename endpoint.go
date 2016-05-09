@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
+	"github.com/tolexo/aero/auth"
 	"github.com/tolexo/aero/cache"
 	monit "github.com/tolexo/aero/monit"
 	"github.com/tolexo/aero/panik"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -236,6 +238,18 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 				}
 			}()
 		}(time.Now())
+
+		//check authentication
+		if e.info.Auth != "" {
+			ok, errMsg := auth.AuthenticateRequest(r, e.info.Auth)
+			if !ok { //print authentication error
+				w.WriteHeader(403)
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Length", strconv.Itoa(len(errMsg)))
+				fmt.Fprintf(w, "%s", errMsg)
+				return
+			}
+		}
 
 		var useCache bool = false
 		var ttl time.Duration = 0 * time.Second
