@@ -243,7 +243,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		if e.info.Auth != "" {
 			ok, errMsg := auth.AuthenticateRequest(r, e.info.Auth)
 			if !ok { //print authentication error
-				w.WriteHeader(403)
+				w.WriteHeader(401)
 				w.Header().Set("Content-Type", "application/json")
 				w.Header().Set("Content-Length", strconv.Itoa(len(errMsg)))
 				fmt.Fprintf(w, "%s", errMsg)
