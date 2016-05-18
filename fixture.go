@@ -16,6 +16,7 @@ type Fixture struct {
 
 	Cache string // cache store
 	Ttl   string // cache ttl
+	Auth  string // authentication method
 }
 
 func NewFixtureFromTag(i interface{}, fieldName string) Fixture {
@@ -75,6 +76,11 @@ func NewFixtureFromTag(i interface{}, fieldName string) Fixture {
 		out.Stub = tmp
 	}
 
+	tmp = getTagValue(tag, "auth")
+	if tmp != "" {
+		out.Auth = tmp
+	}
+
 	return out
 }
 
@@ -122,6 +128,9 @@ func resolveInOrder(e ...Fixture) Fixture {
 		}
 		if out.Stub == empty && ep.Stub != empty {
 			out.Stub = ep.Stub
+		}
+		if out.Auth == empty && ep.Auth != empty {
+			out.Auth = ep.Auth
 		}
 	}
 	return out
