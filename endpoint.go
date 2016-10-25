@@ -3,14 +3,17 @@ package aqua
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 	"github.com/tolexo/aero/auth"
 	"github.com/tolexo/aero/cache"
+	"github.com/tolexo/aero/conf"
 	monit "github.com/tolexo/aero/monit"
 	"github.com/tolexo/aero/panik"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -217,11 +220,34 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		// TODO: create less local variables
 		// TODO: move vars to closure level
 
-		var out []reflect.Value
-
+		var (
+			out     []reflect.Value
+			logFp   *os.File
+			fileErr error
+		)
 		//TODO: capture this using instrumentation handler
 		defer func(reqStartTime time.Time) {
 			go func() {
+				if r := recover(); r != nil {
+					var err error
+					fmt.Println("reached Aqua")
+					path := conf.String("logs.panic_log", "panic_log")
+					path = fmt.Sprintf("%s.log", path)
+					if logFp, fileErr = os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666); fileErr == nil {
+						switch panicError := r.(type) {
+						case string:
+							err = errors.New(panicError)
+						case error:
+							err = panicError
+						default:
+							err = errors.New("Unknown panic type")
+						}
+						logFp.WriteString(err.Error())
+					} else {
+						fmt.Println("Could not create the panic log file")
+					}
+					panic(r)
+				}
 				if e.serviceId != "" {
 					respTime := time.Since(reqStartTime).Seconds() * 1000
 					var responseCode int64 = 200
