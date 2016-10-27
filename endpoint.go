@@ -218,9 +218,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		// TODO: create less local variables
 		// TODO: move vars to closure level
 
-		var (
-			out []reflect.Value
-		)
+		var out []reflect.Value
 		//TODO: capture this using instrumentation handler
 		defer func(reqStartTime time.Time) {
 			go func() {
