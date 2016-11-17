@@ -238,7 +238,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 				}
 			}()
 			if reqR := recover(); reqR != nil {
-				monit.PanicLogger(reqR, e.serviceId, r.RequestURI)
+				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now().UTC().Round(time.Second))
 			}
 		}(time.Now())
 
