@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"reflect"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 	"github.com/tolexo/aero/auth"
 	"github.com/tolexo/aero/cache"
 	monit "github.com/tolexo/aero/monit"
 	"github.com/tolexo/aero/panik"
-	"net/http"
-	"reflect"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type endPoint struct {
@@ -218,7 +219,6 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		// TODO: move vars to closure level
 
 		var out []reflect.Value
-
 		//TODO: capture this using instrumentation handler
 		defer func(reqStartTime time.Time) {
 			go func() {
@@ -237,6 +237,9 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 					monit.MonitorMe(monitorParams)
 				}
 			}()
+			if reqR := recover(); reqR != nil {
+				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now())
+			}
 		}(time.Now())
 
 		//check authentication
