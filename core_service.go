@@ -1,10 +1,7 @@
 package aqua
 
 import (
-<<<<<<< Updated upstream
-=======
 //	"github.com/pivotal-golang/bytefmt"
->>>>>>> Stashed changes
 	"code.cloudfoundry.org/bytefmt"
 	"net/http"
 	"runtime"
