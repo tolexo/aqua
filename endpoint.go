@@ -15,6 +15,7 @@ import (
 	"github.com/tolexo/aero/activity"
 	"github.com/tolexo/aero/auth"
 	"github.com/tolexo/aero/cache"
+	"github.com/tolexo/aero/conf"
 	monit "github.com/tolexo/aero/monit"
 	"github.com/tolexo/aero/panik"
 )
@@ -242,10 +243,17 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 					monit.MonitorMe(monitorParams)
 				}
 			}()
-			if out != nil && len(out) > 1 {
-				response = out[1]
+
+			//User Activity logger start
+			if conf.Bool("log_activity", false) == true {
+				if out != nil && len(out) > 1 {
+					response = out[1]
+				}
+				activity.LogActivity(r.RequestURI, r.Body, response,
+					int(responseCode), time.Since(reqStartTime).Seconds())
 			}
-			activity.LogActivity(r.RequestURI, r.Body, response, int(responseCode), time.Since(reqStartTime).Seconds())
+			//User Activity logger end
+
 			if reqR := recover(); reqR != nil {
 				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now())
 			}
