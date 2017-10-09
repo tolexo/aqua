@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -199,6 +200,14 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 	}
 }
 
+//Copy request body
+func copyReqBody(reqBody io.ReadCloser) (originalBody io.ReadCloser, copyBody interface{}) {
+	bodyByte, _ := ioutil.ReadAll(reqBody)
+	json.Unmarshal(bodyByte, &copyBody)
+	originalBody = ioutil.NopCloser(bytes.NewBuffer(bodyByte))
+	return
+}
+
 func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 	// return stub
@@ -216,7 +225,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		cacheHit := false
+		// cacheHit := false
 
 		// TODO: create less local variables
 		// TODO: move vars to closure level
@@ -227,40 +236,40 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		var body interface{}
 		logActivity := conf.Bool("log_activity", false)
 		if logActivity == true {
-			bodyByte, _ := ioutil.ReadAll(r.Body)
-			json.Unmarshal(bodyByte, &body)
-			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyByte))
+			r.Body, body = copyReqBody(r.Body)
 		}
 
 		defer func(reqStartTime time.Time) {
 			var (
 				response     reflect.Value
-				responseCode int64
+				responseCode int64 = 200
 			)
 			respTime := time.Since(reqStartTime).Seconds() * 1000
-			responseCode = 200
 			if out != nil && len(out) == 2 && e.caller.outParams[0] == "int" {
 				responseCode = out[0].Int()
 			}
-			go func() {
-				if e.serviceId != "" {
-					monitorParams := monit.MonitorParams{
-						ServiceId:    e.serviceId,
-						RespTime:     respTime,
-						ResponseCode: responseCode,
-						CacheHit:     cacheHit,
+			/*
+				go func() {
+					if e.serviceId != "" {
+						monitorParams := monit.MonitorParams{
+							ServiceId:    e.serviceId,
+							RespTime:     respTime,
+							ResponseCode: responseCode,
+							CacheHit:     cacheHit,
+						}
+						monit.MonitorMe(monitorParams)
 					}
-					monit.MonitorMe(monitorParams)
-				}
-			}()
+				}()
+			*/
 
 			//User Activity logger start
 			if logActivity == true {
 				if out != nil && len(out) > 1 {
 					response = out[1]
 				}
-				activity.LogActivity(r.RequestURI, body, response,
-					int(responseCode), time.Since(reqStartTime).Seconds())
+
+				activity.LogActivity(e.serviceId, body, response,
+					int(responseCode), respTime)
 			}
 			//User Activity logger end
 
@@ -310,7 +319,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			if useCache {
 				val, err = e.stash.Get(r.RequestURI)
 				if err == nil {
-					cacheHit = true
+					// cacheHit = true
 					// fmt.Print(".")
 					out = decomposeCachedValues(val, e.caller.outParams)
 				} else {
