@@ -226,9 +226,9 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 				postgres.QL = postgres.NewQueryLogger()
 			}
 			if r.Header.Get("API_DEBUG") == conf.String("debug_query.log_header", "DEBUG-TACHYON") {
-				postgres.QL.AddMethod(e.exec.name)
+				postgres.QL.AddMethod(e.caller.name)
 			} else {
-				postgres.QL.RemoveMethod(e.exec.name)
+				postgres.QL.RemoveMethod(e.caller.name)
 			}
 		}
 		//Query debugger function end
