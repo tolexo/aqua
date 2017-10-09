@@ -14,6 +14,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/tolexo/aero/auth"
 	"github.com/tolexo/aero/cache"
+	"github.com/tolexo/aero/conf"
+	"github.com/tolexo/aero/db/postgres"
 	monit "github.com/tolexo/aero/monit"
 	"github.com/tolexo/aero/panik"
 )
@@ -214,6 +216,22 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		cacheHit := false
+
+		//Query debugger function start
+		queryDebug := conf.Bool("debug_query.log_query", false)
+		if queryDebug == false && postgres.QL != nil {
+			postgres.QL = nil
+		} else if queryDebug == true {
+			if postgres.QL == nil {
+				postgres.QL = postgres.NewQueryLogger()
+			}
+			if r.Header.Get("API_DEBUG") == conf.String("debug_query.log_header", "DEBUG-TACHYON") {
+				postgres.QL.AddMethod(e.exec.name)
+			} else {
+				postgres.QL.RemoveMethod(e.exec.name)
+			}
+		}
+		//Query debugger function end
 
 		// TODO: create less local variables
 		// TODO: move vars to closure level
