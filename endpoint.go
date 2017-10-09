@@ -12,6 +12,7 @@ import (
 
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
+	"github.com/tolexo/aero/activity"
 	"github.com/tolexo/aero/auth"
 	"github.com/tolexo/aero/cache"
 	monit "github.com/tolexo/aero/monit"
@@ -221,13 +222,17 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		var out []reflect.Value
 		//TODO: capture this using instrumentation handler
 		defer func(reqStartTime time.Time) {
+			var (
+				response     reflect.Value
+				responseCode int64
+			)
+			respTime := time.Since(reqStartTime).Seconds() * 1000
+			responseCode = 200
+			if out != nil && len(out) == 2 && e.caller.outParams[0] == "int" {
+				responseCode = out[0].Int()
+			}
 			go func() {
 				if e.serviceId != "" {
-					respTime := time.Since(reqStartTime).Seconds() * 1000
-					var responseCode int64 = 200
-					if out != nil && len(out) == 2 && e.caller.outParams[0] == "int" {
-						responseCode = out[0].Int()
-					}
 					monitorParams := monit.MonitorParams{
 						ServiceId:    e.serviceId,
 						RespTime:     respTime,
@@ -237,6 +242,10 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 					monit.MonitorMe(monitorParams)
 				}
 			}()
+			if out != nil && len(out) > 1 {
+				response = out[1]
+			}
+			activity.LogActivity(r.RequestURI, r.Body, response, int(responseCode), time.Since(reqStartTime).Seconds())
 			if reqR := recover(); reqR != nil {
 				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now())
 			}
