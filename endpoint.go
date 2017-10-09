@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -222,6 +223,15 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 		var out []reflect.Value
 		//TODO: capture this using instrumentation handler
+
+		var body interface{}
+		logActivity := conf.Bool("log_activity", false)
+		if logActivity == true {
+			bodyByte, _ := ioutil.ReadAll(r.Body)
+			json.Unmarshal(bodyByte, &body)
+			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyByte))
+		}
+
 		defer func(reqStartTime time.Time) {
 			var (
 				response     reflect.Value
@@ -245,11 +255,11 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			}()
 
 			//User Activity logger start
-			if conf.Bool("log_activity", false) == true {
+			if logActivity == true {
 				if out != nil && len(out) > 1 {
 					response = out[1]
 				}
-				activity.LogActivity(r.RequestURI, r.Body, response,
+				activity.LogActivity(r.RequestURI, body, response,
 					int(responseCode), time.Since(reqStartTime).Seconds())
 			}
 			//User Activity logger end
