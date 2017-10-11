@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/cloudfoundry/bytefmt"
+	"code.cloudfoundry.org/bytefmt"
 )
 
 type CoreService struct {
