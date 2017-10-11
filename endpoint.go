@@ -241,7 +241,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 		defer func(reqStartTime time.Time) {
 			var (
-				response     reflect.Value
+				response     interface{}
 				responseCode int64 = 200
 			)
 			respTime := time.Since(reqStartTime).Seconds() * 1000
@@ -265,10 +265,10 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			//User Activity logger start
 			if logActivity == true {
 				if out != nil && len(out) > 1 {
-					response = out[1]
-					activity.LogActivity(e.serviceId, body, response,
-						int(responseCode), respTime)
+					response = out[1].Interface()
 				}
+				activity.LogActivity(e.serviceId, body, response,
+					int(responseCode), respTime)
 			}
 			//User Activity logger end
 
