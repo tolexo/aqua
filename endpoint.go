@@ -273,7 +273,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			//User Activity logger end
 
 			if reqR := recover(); reqR != nil {
-				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now())
+				monit.PanicLogger(reqR, r.RequestURI+" "+e.serviceId, r.RequestURI, time.Now())
 			}
 		}(time.Now())
 
