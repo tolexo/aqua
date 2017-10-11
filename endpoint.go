@@ -203,7 +203,7 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 //Copy request body
 func copyReqBody(reqBody io.ReadCloser) (originalBody io.ReadCloser, copyBody interface{}) {
 	bodyByte, _ := ioutil.ReadAll(reqBody)
-	json.Unmarshal(bodyByte, &copyBody)
+	copyBody = string(bodyByte)
 	originalBody = ioutil.NopCloser(bytes.NewBuffer(bodyByte))
 	return
 }
@@ -238,7 +238,6 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		if logActivity == true {
 			r.Body, body = copyReqBody(r.Body)
 		}
-
 		defer func(reqStartTime time.Time) {
 			var (
 				response     interface{}
@@ -264,8 +263,13 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 			//User Activity logger start
 			if logActivity == true {
-				if out != nil && len(out) > 1 {
-					response = out[1].Interface()
+				if out != nil {
+					outLen := len(out)
+					if outLen > 1 {
+						response = out[1].Interface()
+					} else if outLen > 0 {
+						response = out[0].Interface()
+					}
 				}
 				activity.LogActivity(r.RequestURI+" "+e.serviceId, body, response,
 					int(responseCode), respTime)
