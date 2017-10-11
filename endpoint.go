@@ -267,13 +267,13 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 				if out != nil && len(out) > 1 {
 					response = out[1].Interface()
 				}
-				activity.LogActivity(e.serviceId, body, response,
+				activity.LogActivity(r.RequestURI+" "+e.serviceId, body, response,
 					int(responseCode), respTime)
 			}
 			//User Activity logger end
 
 			if reqR := recover(); reqR != nil {
-				monit.PanicLogger(reqR, r.RequestURI+" "+e.serviceId, r.RequestURI, time.Now())
+				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now())
 			}
 		}(time.Now())
 
