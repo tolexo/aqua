@@ -266,9 +266,9 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			if logActivity == true {
 				if out != nil && len(out) > 1 {
 					response = out[1]
+					activity.LogActivity(e.serviceId, body, response,
+						int(responseCode), respTime)
 				}
-				activity.LogActivity(e.serviceId, body, response,
-					int(responseCode), respTime)
 			}
 			//User Activity logger end
 

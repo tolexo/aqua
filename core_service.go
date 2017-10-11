@@ -1,12 +1,12 @@
 package aqua
 
 import (
-	//	"github.com/pivotal-golang/bytefmt"
 	"net/http"
 	"runtime"
 	"time"
 
-	"code.cloudfoundry.org/bytefmt"
+	"github.com/pivotal-golang/bytefmt"
+	// "code.cloudfoundry.org/bytefmt"
 )
 
 type CoreService struct {
