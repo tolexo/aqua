@@ -203,7 +203,9 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 //Copy request body
 func copyReqBody(reqBody io.ReadCloser) (originalBody io.ReadCloser, copyBody interface{}) {
 	bodyByte, _ := ioutil.ReadAll(reqBody)
-	copyBody = string(bodyByte)
+	if err := json.Unmarshal(bodyByte, &copyBody); err != nil {
+		copyBody = string(bodyByte)
+	}
 	originalBody = ioutil.NopCloser(bytes.NewBuffer(bodyByte))
 	return
 }
