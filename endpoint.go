@@ -273,7 +273,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 						response = out[0].Interface()
 					}
 				}
-				activity.LogActivity(r.RequestURI+" "+e.serviceId, body, response,
+				activity.LogActivity(r.RequestURI, e.serviceId, body, response,
 					int(responseCode), respTime)
 			}
 			//User Activity logger end
