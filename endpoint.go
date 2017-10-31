@@ -236,7 +236,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		//TODO: capture this using instrumentation handler
 
 		var body interface{}
-		logActivity := conf.Bool("log_activity", false)
+		logActivity := conf.Bool("log_activity", false) && e.info.Log
 		if logActivity == true {
 			r.Body, body = copyReqBody(r.Body)
 		}

@@ -2,6 +2,7 @@ package aqua
 
 import (
 	"reflect"
+	"strconv"
 )
 
 type Fixture struct {
@@ -17,6 +18,7 @@ type Fixture struct {
 	Cache string // cache store
 	Ttl   string // cache ttl
 	Auth  string // authentication method
+	Log   bool
 }
 
 func NewFixtureFromTag(i interface{}, fieldName string) Fixture {
@@ -69,6 +71,11 @@ func NewFixtureFromTag(i interface{}, fieldName string) Fixture {
 	tmp = getTagValue(tag, "ttl")
 	if tmp != "" {
 		out.Ttl = tmp
+	}
+
+	tmp = getTagValue(tag, "log")
+	if tmp != "" {
+		out.Log, _ = strconv.ParseBool(tmp)
 	}
 
 	tmp = getTagValue(tag, "stub")
@@ -125,6 +132,9 @@ func resolveInOrder(e ...Fixture) Fixture {
 		}
 		if out.Ttl == empty && ep.Ttl != empty {
 			out.Ttl = ep.Ttl
+		}
+		if out.Log == false && ep.Log == true {
+			out.Log = ep.Log
 		}
 		if out.Stub == empty && ep.Stub != empty {
 			out.Stub = ep.Stub
