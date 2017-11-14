@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -12,8 +14,10 @@ import (
 
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
+	"github.com/tolexo/aero/activity"
 	"github.com/tolexo/aero/auth"
 	"github.com/tolexo/aero/cache"
+	"github.com/tolexo/aero/conf"
 	monit "github.com/tolexo/aero/monit"
 	"github.com/tolexo/aero/panik"
 )
@@ -196,6 +200,16 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 	}
 }
 
+//Copy request body
+func copyReqBody(reqBody io.ReadCloser) (originalBody io.ReadCloser, copyBody interface{}) {
+	bodyByte, _ := ioutil.ReadAll(reqBody)
+	if err := json.Unmarshal(bodyByte, &copyBody); err != nil {
+		copyBody = string(bodyByte)
+	}
+	originalBody = ioutil.NopCloser(bytes.NewBuffer(bodyByte))
+	return
+}
+
 func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 	// return stub
@@ -213,30 +227,57 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		cacheHit := false
+		// cacheHit := false
 
 		// TODO: create less local variables
 		// TODO: move vars to closure level
 
 		var out []reflect.Value
 		//TODO: capture this using instrumentation handler
+
+		var body interface{}
+		logActivity := conf.Bool("log_activity", false)
+		if logActivity == true {
+			r.Body, body = copyReqBody(r.Body)
+		}
 		defer func(reqStartTime time.Time) {
-			go func() {
-				if e.serviceId != "" {
-					respTime := time.Since(reqStartTime).Seconds() * 1000
-					var responseCode int64 = 200
-					if out != nil && len(out) == 2 && e.caller.outParams[0] == "int" {
-						responseCode = out[0].Int()
+			var (
+				response     interface{}
+				responseCode int64 = 200
+			)
+			respTime := time.Since(reqStartTime).Seconds() * 1000
+			if out != nil && len(out) == 2 && e.caller.outParams[0] == "int" {
+				responseCode = out[0].Int()
+			}
+			/*
+				go func() {
+					if e.serviceId != "" {
+						monitorParams := monit.MonitorParams{
+							ServiceId:    e.serviceId,
+							RespTime:     respTime,
+							ResponseCode: responseCode,
+							CacheHit:     cacheHit,
+						}
+						monit.MonitorMe(monitorParams)
 					}
-					monitorParams := monit.MonitorParams{
-						ServiceId:    e.serviceId,
-						RespTime:     respTime,
-						ResponseCode: responseCode,
-						CacheHit:     cacheHit,
+				}()
+			*/
+
+			//User Activity logger start
+			if logActivity == true {
+				if out != nil {
+					outLen := len(out)
+					if outLen > 1 {
+						response = out[1].Interface()
+					} else if outLen > 0 {
+						response = out[0].Interface()
 					}
-					monit.MonitorMe(monitorParams)
 				}
-			}()
+				activity.LogActivity(r.RequestURI+" "+e.serviceId, body, response,
+					int(responseCode), respTime)
+			}
+			//User Activity logger end
+
 			if reqR := recover(); reqR != nil {
 				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now())
 			}
@@ -283,7 +324,7 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			if useCache {
 				val, err = e.stash.Get(r.RequestURI)
 				if err == nil {
-					cacheHit = true
+					// cacheHit = true
 					// fmt.Print(".")
 					out = decomposeCachedValues(val, e.caller.outParams)
 				} else {
