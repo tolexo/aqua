@@ -20,6 +20,7 @@ var defaults Fixture = Fixture{
 	Cache:   "",
 	Ttl:     "",
 	Auth:    "",
+	Log:     false,
 }
 
 var release string = "0.0.1"
