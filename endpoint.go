@@ -175,7 +175,7 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 	fn := handleIncoming(me)
 
 	m := interpose.New()
-	for i, _ := range me.modules {
+	for i := range me.modules {
 		m.Use(me.modules[i])
 		//fmt.Println("using module:", me.modules[i], reflect.TypeOf(me.modules[i]))
 	}
@@ -262,6 +262,14 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 					}
 				}()
 			*/
+
+			//Error Activity Log START
+			enablelog := conf.Bool("monitor.enablelog", false)
+			slowLogTiming := conf.Float64("monitor.slowLogTiming", 0.0)
+			if (enablelog && responseCode != 200) || (slowLogTiming > 0.0 && respTime > slowLogTiming) {
+				activity.LogCSV(e.serviceId, r.RequestURI, respTime, responseCode)
+			}
+			//Error Activity Log END
 
 			//User Activity logger start
 			if logActivity == true {
@@ -357,7 +365,7 @@ func prepareForCaching(r []reflect.Value, outputParams []string) []byte {
 	buf := new(bytes.Buffer)
 	encd := json.NewEncoder(buf)
 
-	for i, _ := range r {
+	for i := range r {
 		switch outputParams[i] {
 		case "int":
 			err = encd.Encode(r[i].Int())
