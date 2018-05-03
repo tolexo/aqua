@@ -279,8 +279,16 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			//User Activity logger end
 
 			if reqR := recover(); reqR != nil {
-				out = append(out, reflect.ValueOf(500), reflect.ValueOf(NewSac()))
-				writeOutput(w, e.caller.outParams, out, e.info.Pretty)
+				data := NewSac()
+				data.Set("panic", reqR)
+				out = append(out, reflect.ValueOf(500), reflect.ValueOf(data))
+				var outParams []string
+				if len(e.caller.outParams) == 1 {
+					outParams = append(outParams, "int", e.caller.outParams[0])
+				} else if len(e.caller.outParams) == 2 {
+					outParams = e.caller.outParams
+				}
+				writeOutput(w, outParams, out, e.info.Pretty)
 				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now())
 			}
 		}(time.Now())
