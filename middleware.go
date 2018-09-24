@@ -32,7 +32,7 @@ func ModAccessLog(path string) func(http.Handler) http.Handler {
 			start := time.Now()
 			wrapWriter := &statusWriter{ResponseWriter: w, status: http.StatusOK}
 			next.ServeHTTP(wrapWriter, r)
-			l.Printf("%s %s %s %.3f", r.Method, r.RequestURI, wrapWriter.status, time.Since(start).Seconds())
+			l.Printf("%s %s %v %.3f", r.Method, r.RequestURI, wrapWriter.status, time.Since(start).Seconds())
 		})
 	}
 }
