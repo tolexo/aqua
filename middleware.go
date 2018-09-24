@@ -1,12 +1,25 @@
 package aqua
 
 import (
-	"github.com/tolexo/aero/panik"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/tolexo/aero/panik"
 )
+
+//statusWriter implemented http ResponseWriter
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+//WriteHeader implementing http ResponseWriter method
+func (w *statusWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
 
 func ModAccessLog(path string) func(http.Handler) http.Handler {
 
@@ -17,8 +30,9 @@ func ModAccessLog(path string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			next.ServeHTTP(w, r)
-			l.Printf("%s %s %.3f", r.Method, r.RequestURI, time.Since(start).Seconds())
+			wrapWriter := &statusWriter{ResponseWriter: w, status: http.StatusOK}
+			next.ServeHTTP(wrapWriter, r)
+			l.Printf("%s %s %s %.3f", r.Method, r.RequestURI, wrapWriter.status, time.Since(start).Seconds())
 		})
 	}
 }
