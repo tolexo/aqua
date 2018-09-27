@@ -1,17 +1,19 @@
 package aqua
 
 import (
-	"github.com/tolexo/aero/panik"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/tolexo/aero/panik"
 )
 
 func ModAccessLog(path string) func(http.Handler) http.Handler {
 
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	panik.On(err)
+	defer f.Close()
 	l := log.New(f, "", log.LstdFlags)
 
 	return func(next http.Handler) http.Handler {
