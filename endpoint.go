@@ -175,7 +175,7 @@ func (me *endPoint) setupMuxHandlers(mux *mux.Router) {
 	fn := handleIncoming(me)
 
 	m := interpose.New()
-	for i, _ := range me.modules {
+	for i := range me.modules {
 		m.Use(me.modules[i])
 		//fmt.Println("using module:", me.modules[i], reflect.TypeOf(me.modules[i]))
 	}
@@ -279,6 +279,14 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 			//User Activity logger end
 
 			if reqR := recover(); reqR != nil {
+				out = append(out, reflect.ValueOf(500), reflect.ValueOf(NewSac()))
+				var outParams []string
+				if len(e.caller.outParams) == 1 {
+					outParams = append(outParams, "int", e.caller.outParams[0])
+				} else if len(e.caller.outParams) == 2 {
+					outParams = e.caller.outParams
+				}
+				writeOutput(w, outParams, out, e.info.Pretty)
 				monit.PanicLogger(reqR, e.serviceId, r.RequestURI, time.Now())
 			}
 		}(time.Now())
@@ -357,7 +365,7 @@ func prepareForCaching(r []reflect.Value, outputParams []string) []byte {
 	buf := new(bytes.Buffer)
 	encd := json.NewEncoder(buf)
 
-	for i, _ := range r {
+	for i := range r {
 		switch outputParams[i] {
 		case "int":
 			err = encd.Encode(r[i].Int())
