@@ -284,7 +284,10 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 		}(time.Now())
 
 		//check authentication
-		if e.info.Auth != "" {
+		j := NewJar(r)
+		j.LoadVars()
+		pub := j.QueryVars["pub"]
+		if pub == "1" { //authenticate public apis
 			ok, errMsg := auth.AuthenticateRequest(r, e.info.Auth)
 			if !ok { //print authentication error
 				w.WriteHeader(401)
@@ -346,7 +349,29 @@ func handleIncoming(e *endPoint) func(http.ResponseWriter, *http.Request) {
 				out = e.caller.Do(ref)
 				// fmt.Print("!")
 			}
+			if pub == "1" { //wrap output of public api
+				WrapResult(e.caller.outParams, &out)
+			}
 			writeOutput(w, e.caller.outParams, out, e.info.Pretty)
+		}
+	}
+}
+
+func WrapResult(outType []string, outVals *[]reflect.Value) {
+
+	wrapper := make(map[string]interface{})
+
+	if len(outType) == 1 && outType[0] == "map" {
+		data := (*outVals)[0].Interface().(map[string]interface{})
+		if data["result"] == nil {
+			wrapper["result"] = data
+			(*outVals)[0] = reflect.ValueOf(wrapper)
+		}
+	} else if len(outType) == 2 && outType[1] == "map" {
+		data := (*outVals)[1].Interface().(map[string]interface{})
+		if data["result"] == nil {
+			wrapper["result"] = data
+			(*outVals)[1] = reflect.ValueOf(wrapper)
 		}
 	}
 }
