@@ -37,7 +37,7 @@ func (j *Jar) LoadVars() {
 		j.QueryVars = make(map[string]string)
 	}
 
-	if j.Request.Method == "POST" || j.Request.Method == "PUT" {
+	if j.Request.Method == "POST" || j.Request.Method == "PUT" || j.Request.Method == "DELETE" {
 		ctype := j.Request.Header.Get("Content-Type")
 		switch {
 		case ctype == "application/x-www-form-urlencoded":
